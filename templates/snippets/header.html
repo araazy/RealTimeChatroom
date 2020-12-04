@@ -49,7 +49,7 @@
           </div>
         {% else %}
           <a href="#" class="p-2 text-dark">Login</a>
-          <a href="#" class="btn btn-outline-primary">Register</a>
+          <a href="register" class="btn btn-outline-primary">Register</a>
         {% endif %}
       </nav>
     </div>
@@ -84,7 +84,7 @@
           </div>
         {% else %}
           <a href="#" class="p-2 text-dark">Login</a>
-          <a href="#" class="btn btn-outline-primary m-2">Register</a>
+          <a href="{% url 'register' %}" class="btn btn-outline-primary m-2">Register</a>
         {% endif %}
       </nav>
     </div>
