@@ -38,7 +38,7 @@
               <!-- account -->
               <div class="btn-group dropleft">
                 <img class="account-image rounded-circle m-auto d-block dropdown-toggle" id="id_profile_links" data-toggle="dropdown" aria-haspopup="true"
-                aria-expanded="false" src="{% static 'profiles/dummy_image.png' %}" alt="profile logo" width="40" height="40">
+                aria-expanded="false" src="{{ request.user.profile_image.url }}" alt="profile logo" width="40" height="40">
                   <div class="dropdown-menu" aria-labelledby="id_profile_links">
                     <a href="#" class="dropdown-item">Account</a>
                     <a href="#" class="dropdown-item">Logout</a>
@@ -74,7 +74,7 @@
               <!-- account -->
               <div class="btn-group dropleft">
                 <img class="account-image rounded-circle m-auto d-block dropdown-toggle" id="id_profile_links" data-toggle="dropdown" aria-haspopup="true"
-                aria-expanded="false" src="{% static 'profiles/dummy_image.png' %}" alt="profile logo" width="40" height="40">
+                aria-expanded="false" src="{{ request.user.profile_image.url }}" alt="profile logo" width="40" height="40">
                   <div class="dropdown-menu" aria-labelledby="id_profile_links">
                     <a href="#" class="dropdown-item">Account</a>
                     <a href="#" class="dropdown-item">Logout</a>
