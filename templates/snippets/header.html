@@ -8,6 +8,7 @@
       <a class="p-2 text-dark" href="{% url 'home' %}">Home</a>
     </h5>
     <!-- col2：搜索框 -->
+    {# return boolean here, cause it will be used in """ if requeset.GET """ #}
     <form class="navbar justify-content-start" onsubmit="return executeQuery()">
       <label for="id_q_large"></label><input type="text" class="form-control" name="q" id = "id_q_large" placeholder="Search...">
     </form>
