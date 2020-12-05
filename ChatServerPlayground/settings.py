@@ -13,6 +13,9 @@ SECRET_KEY = '70ujru1(gr#ey_53jvle4=6h9&2p#9@2$2woj8)8j!7dcg=_6n'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
+if DEBUG:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # development ONLY
+
 ALLOWED_HOSTS = []
 
 AUTH_USER_MODEL = "account.Account"
@@ -141,5 +144,5 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media_cdn')
 
 TEMP = os.path.join(BASE_DIR, 'media_cdn.temp')
 
-BASE_DIR = "http://127.0.0.1:8000"
+BASE_URL = "http://127.0.0.1:8000"
 
