@@ -98,12 +98,24 @@
 	var imageFile;
 	var base64ImageString;
 	var cropX;
-	var cropX;
+	var cropY;
 	var cropWidth;
 	var cropHeight;
 
 	enableImageOverlay()
-
+  // addEventListener 和 removeEventListener的事件函数必须相同，remove的事件函数不可以是匿名函数
+  function setMouseOver(event) {
+    var profileImage = document.getElementById("id_profile_image_display")
+    var middleContainer = document.getElementById("id_middle_container")
+			profileImage.style.opacity = "0.3"
+			middleContainer.style.opacity = "1"
+  }
+  function setMouseOut(event) {
+      var profileImage = document.getElementById("id_profile_image_display")
+      var middleContainer = document.getElementById("id_middle_container")
+			profileImage.style.opacity = "1"
+			middleContainer.style.opacity = "0"
+		}
 	function enableImageOverlay(){
 		var text = document.getElementById("id_text")
 		text.style.backgroundColor = "#0066ff"
@@ -112,7 +124,8 @@
 		text.style.padding = "16px 32px"
 		text.style.cursor = "pointer"
 
-		var profileImage = document.getElementById("id_profile_image")
+		var profileImage = document.getElementById("id_profile_image_display")
+
 		profileImage.style.opacity = "1"
 		profileImage.style.display = "block"
 		profileImage.style.width = "100%"
@@ -122,7 +135,6 @@
 		profileImage.style.cursor = "pointer"
 
 		var middleContainer = document.getElementById("id_middle_container")
-		middleContainer.style.transition = ".5s ease"
 		middleContainer.style.opacity = "0"
 		middleContainer.style.position = "absolute"
 		middleContainer.style.top = "50%"
@@ -131,15 +143,9 @@
 		middleContainer.style.textAlign = "center"
 
 		var imageContainer = document.getElementById("id_image_container")
-		imageContainer.addEventListener("mouseover", function( event ) { 
-			profileImage.style.opacity = "0.3"
-			middleContainer.style.opacity = "1"
-		})
+		imageContainer.addEventListener("mouseover", setMouseOver)
 
-		imageContainer.addEventListener("mouseout", function( event ) { 
-			profileImage.style.opacity = "1"
-			middleContainer.style.opacity = "0"
-		})
+		imageContainer.addEventListener("mouseout", setMouseOut)
 
 		imageContainer.addEventListener("click", function(event){
 			document.getElementById('id_profile_image').click();
@@ -159,15 +165,9 @@
 		var imageContainer = document.getElementById("id_image_container")
 		var text = document.getElementById("id_text")
 
-		imageContainer.removeEventListener("mouseover", function( event ) { 
-			profileImage.style.opacity = "0.3"
-			middleContainer.style.opacity = "1"
-		})
+		imageContainer.removeEventListener("mouseover", setMouseOver)
 
-		imageContainer.removeEventListener("mouseout", function( event ) { 
-			profileImage.style.opacity = "1"
-			middleContainer.style.opacity = "0"
-		})
+		imageContainer.removeEventListener("mouseout", setMouseOut)
 
 		profileImage.style.opacity = "1"
 		middleContainer.style.opacity = "0"
@@ -268,42 +268,37 @@
 		Called when a new image is selected from file chooser dialog
 	*/
 	function readURL(input) {
-        if (input.files && input.files[0]) {
-            var reader = new FileReader();
+    if (input.files && input.files[0]) {
+        var reader = new FileReader();
 
-            reader.onload = function (e) {
-            	disableImageOverlay()
-            	var image = e.target.result
-            	var imageField = document.getElementById('id_profile_image_display')
-                imageField.src = image
-				cropper = new Cropper(imageField, {
-					aspectRatio: 1,
-					crop(event) {
-						// console.log("CROP START")
-						// console.log("x: " + event.detail.x);
-						// console.log("y: " + event.detail.y);
-						// console.log("width: " + event.detail.width);
-						// console.log("height: " + event.detail.height);
-						setImageCropProperties(
-							image,
-							event.detail.x,
-							event.detail.y,
-							event.detail.width,
-							event.detail.height
-						)
-					},
-				});
-            };
-            reader.readAsDataURL(input.files[0]);
-        }
-    };
+        reader.onload = function (e) {
+          disableImageOverlay()
+          var image = e.target.result
+          var imageField = document.getElementById('id_profile_image_display')
+          imageField.src = image;
+          cropper = new Cropper(imageField, {
+            aspectRatio: 1,
+            crop(event) {
+              setImageCropProperties(
+                image,
+                event.detail.x,
+                event.detail.y,
+                event.detail.width,
+                event.detail.height
+              )
+            },
+          });
+        };
+        reader.readAsDataURL(input.files[0]);
+      }
+    }
 
-    function setImageCropProperties(image, x, y, width, height){
-		imageFile = image
-		cropX = x
-		cropY = y
-		cropWidth = width
-		cropHeight = height
+  function setImageCropProperties(image, x, y, width, height){
+		imageFile = image;
+		cropX = x;
+		cropY = y;
+		cropWidth = width;
+		cropHeight = height;
 	}
 
 </script>

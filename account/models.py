@@ -33,7 +33,7 @@ class MyAccountManager(BaseUserManager):
 
 
 # 图片存放地址
-def get_profile_image_filepath(self):
+def get_profile_image_filepath(self, filename):
     return f'profile_images/{str(self.pk)}/{"profile_image.png"}'
 
 
