@@ -1,11 +1,21 @@
+import os
+import cv2
+import json
+import base64
+import requests
+import numpy as np
+from django.core import files
+from django.conf import settings
+from account.models import Account
+from django.db.models import Q
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.contrib.auth import login, logout, authenticate
-import cv2
-from django.conf import settings
+from django.core.files.storage import default_storage, FileSystemStorage
 from account.forms import RegistrationForm, AccountAuthenticationForm, AccountUpdateForm
-from account.models import Account
-from django.db.models import Q
+
+# temporary image path
+TEMP_PROFILE_IMAGE_NAME = "temp_profile_image.png"
 
 
 def register_view(request, *args, **kwargs):
@@ -161,14 +171,72 @@ def edit_account_view(request, *args, **kwargs):
     else:
         # set initial values
         form = AccountUpdateForm(
-                                 initial={
-                                     "id": account.pk,
-                                     "email": account.email,
-                                     "username": account.username,
-                                     "profile_image": account.profile_image,
-                                     "hide_email": account.hide_email,
-                                 }
-                                 )
+            initial={
+                "id": account.pk,
+                "email": account.email,
+                "username": account.username,
+                "profile_image": account.profile_image,
+                "hide_email": account.hide_email,
+            }
+        )
         context['form'] = form
     context['DATA_UPLOAD_MAX_MEMORY_SIZE'] = settings.DATA_UPLOAD_MAX_MEMORY_SIZE
     return render(request, "account/edit_account.html", context)
+
+
+def save_temp_profile_image_from_base64String(imageString, user):
+    INCORRECT_PADDING_EXCEPTION = "Incorrect padding"
+    try:
+        if not os.path.exists(settings.TEMP):
+            os.mkdir(settings.TEMP)
+        if not os.path.exists(settings.TEMP + "/" + str(user.pk)):
+            os.mkdir(settings.TEMP + "/" + str(user.pk))
+        url = os.path.join(settings.TEMP + "/" + str(user.pk), TEMP_PROFILE_IMAGE_NAME)
+        storage = FileSystemStorage(location=url)
+        image = base64.b64decode(imageString)
+        with storage.open('', 'wb+') as destination:
+            destination.write(image)
+        return url
+    except Exception as e:
+        print("exception: " + str(e))
+        # workaround for an issue I found
+        if str(e) == INCORRECT_PADDING_EXCEPTION:
+            imageString += "=" * ((4 - len(imageString) % 4) % 4)
+            return save_temp_profile_image_from_base64String(imageString, user)
+    return None
+
+
+def crop_image(request, *args, **kwargs):
+    payload = {}
+    user = request.user
+    if request.POST and user.is_authenticated:
+        try:
+            imageString = request.POST.get("image")
+            print(imageString[:100])
+            url = save_temp_profile_image_from_base64String(imageString, user)
+            img = cv2.imread(url)
+            print("crop url: ", url)
+            cropX = int(float(str(request.POST.get("cropX"))))
+            cropY = int(float(str(request.POST.get("cropY"))))
+            cropWidth = int(float(str(request.POST.get("cropWidth"))))
+            cropHeight = int(float(str(request.POST.get("cropHeight"))))
+
+            if cropX < 0:
+                cropX = 0
+            if cropY < 0:
+                cropY = 0
+            # crop
+            crop_img = img[cropY:cropY + cropHeight, cropX:cropX + cropWidth]
+            cv2.imwrite(url, crop_img)
+            user.profile_image.delete()
+            user.profile_image.save("profile_image.png", files.File(open(url, "rb")))
+            user.save()
+            payload['result'] = "success"
+            payload['cropped_profile_image'] = user.profile_image.url
+            os.remove(url)
+        except Exception as e:
+            print("exception: " + str(e))
+            payload['result'] = "error"
+            payload['exception'] = str(e)
+
+    return HttpResponse(json.dumps(payload), content_type="application/json")

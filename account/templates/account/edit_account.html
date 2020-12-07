@@ -46,11 +46,13 @@
 		  		</div>
 		  		<div class="image-container" id="id_image_container">
 	  				<img class="border border-dark rounded-circle img-fluid mx-auto profile-image" id="id_profile_image_display" src="{{form.initial.profile_image.url}}" alt="codingwithmitch logo">
-					<div class="middle" id="id_middle_container">
+					<!-- create overlay effect by using css top/left and transform properties -->
+          <div class="middle" id="id_middle_container">
 						<div class="text" id="id_text">Edit</div>
 					</div>
 		  		</div>
-		  		<form class="form-signin" method="post" enctype="multipart/form-data">{% csrf_token %}
+          <!-- 使用ajax接管表单的提交，所以不需要enctype="multipart/form-data" -->
+		  		<form class="form-signin" method="post">{% csrf_token %}
 		  			<input class="d-none" type="file" name="profile_image" id="id_profile_image" onchange="readURL(this)">
 			  		<h6 class="mt-4 field-heading">Email</h6>
 			  		<input type="email" name="email" id="id_input_email" class="form-control" placeholder="Email address" required autofocus value={{form.initial.email}}>
@@ -130,7 +132,6 @@
 		profileImage.style.display = "block"
 		profileImage.style.width = "100%"
 		profileImage.style.height = "auto"
-		profileImage.style.transition = ".5s ease"
 		profileImage.style.backfaceVisibility  = "hidden"
 		profileImage.style.cursor = "pointer"
 
@@ -216,7 +217,7 @@
 		var base64str = image.substr(startIndex);
 		var decoded = atob(base64str);
 		console.log("FileSize: " + decoded.length);
-		if(decoded.length>= "{{DATA_UPLOAD_MAX_MEMORY_SIZE}}"){
+		if(decoded.length >= "{{DATA_UPLOAD_MAX_MEMORY_SIZE}}"){
 			return null
 		}
 		return base64str
@@ -224,7 +225,7 @@
 
 	function cropImage(image, x, y, width, height){
 		base64ImageString = isImageSizeValid(image)
-
+    console.log(base64ImageString);
 		if(base64ImageString != null){
 			var requestData = {
 				"csrfmiddlewaretoken": "{{ csrf_token }}",
@@ -238,14 +239,14 @@
 			$.ajax({
 				type: 'POST',
 				dataType: "json",
-				{#url: "{% url 'account:crop_image' user_id=form.initial.id %}",#}
+        url: "{% url 'account:crop_image' user_id=form.initial.id %}",
 				data: requestData,
 				timeout: 10000,
 				success: function(data) {
-					if(data.result == "success"){
+					if(data.result === "success"){
 						document.getElementById("id_cancel").click()
 					}
-					else if(data.result == "error"){
+					else if(data.result === "error"){
 						alert(data.exception)
 						document.getElementById("id_cancel").click()
 					}
@@ -270,14 +271,13 @@
 	function readURL(input) {
     if (input.files && input.files[0]) {
         var reader = new FileReader();
-
         reader.onload = function (e) {
           disableImageOverlay()
           var image = e.target.result
           var imageField = document.getElementById('id_profile_image_display')
           imageField.src = image;
           cropper = new Cropper(imageField, {
-            aspectRatio: 1,
+            aspectRatio: 1/1,
             crop(event) {
               setImageCropProperties(
                 image,
