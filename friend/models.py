@@ -52,7 +52,7 @@ class FriendRequest(models.Model):
     A friend request consists of two main parts:
         1. SENDER
             - Person sending/initiating the friend request
-        2. RECIVER
+        2. RECEIVER
             - Person receiving the friend friend
     """
     sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="sender")
