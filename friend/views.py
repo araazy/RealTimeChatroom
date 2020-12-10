@@ -1,8 +1,24 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import HttpResponse
 import json
 from account.models import Account
 from friend.models import FriendRequest
+
+
+def friend_requests_view(request, *args, **kwargs):
+    context = {}
+    user = request.user
+    if user.is_authenticated:
+        user_id = kwargs.get("user_id")
+        account = Account.objects.get(pk=user_id)
+        if account == user:
+            friend_requests = FriendRequest.objects.filter(receiver=account, is_active=True)
+            context['friend_requests'] = friend_requests
+        else:
+            return HttpResponse("You can't view another user's friend requests")
+    else:
+        redirect("login")
+    return render(request, "friend/friend_requests.html", context)
 
 
 def send_friend_request(request):
@@ -40,3 +56,27 @@ def send_friend_request(request):
     else:
         payload['response'] = "You must be authenticated to send a friend request."
     return HttpResponse(json.dumps(payload), content_type="application/json")
+
+
+def accept_friend_request(request, *args, **kwargs):
+    user = request.user
+    payload = {}
+    if request.method == "GET" and user.is_authenticated:
+        friend_request_id = kwargs.get("friend_request_id")
+        if friend_request_id:
+            friend_request = FriendRequest.objects.get(pk=friend_request_id)
+            # confirm it
+            if friend_request.receiver == user:
+                if friend_request:
+                    friend_request.accept()
+                    payload["response"] = "Friend request accepted."
+                else:
+                    payload["response"] = "Something went wrong."
+            else:
+                payload['response'] = "This is not your request to accept."
+        else:
+            payload['response'] = "Unable to accept that friend request."
+    else:
+        payload['response'] = "You must be authenticated to accept a friend request."
+    return HttpResponse(json.dumps(payload), content_type="application/json")
+

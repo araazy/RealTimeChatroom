@@ -14,7 +14,7 @@ class FriendList(models.Model):
         """
         Add a new friend.
         """
-        if not account in self.friends.all():
+        if account not in self.friends.all():
             self.friends.add(account)
             self.save()
 

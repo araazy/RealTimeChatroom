@@ -116,6 +116,8 @@
 			<div class="card m-2 px-4 pb-4">
 				<!-- Cancel Friend Request / Send Friend Request / Remove Friend -->
 				{% if is_friend == False and is_self == False %}
+                  <script>alert("You are not friends")</script>
+
 						<!-- You sent them a request -->
 						{% if request_sent == 1 %}
 						<div class="d-flex flex-column align-items-center pt-4">
@@ -161,7 +163,7 @@
 			<div class="card m-2 px-4 pb-4">
 				<!-- Friend requests -->
 		  		<div class="d-flex flex-column pt-4">
-					<a href="#">
+					<a href="{% url 'friend:friend-requests' user_id=id %}">
 						<div class="d-flex flex-row align-items-center justify-content-center icon-container">
 							<span class="material-icons mr-2 person-add-icon">person_add</span><span class="friend-text">Friend Requests ({{friend_requests|length}})</span>
 						</div>
@@ -245,7 +247,7 @@
 </script>
 
 {% include 'friend/snippets/send_friend_request.html' %}
-{#{% include 'friend/snippets/accept_friend_request.html' %}#}
+{% include 'friend/snippets/accept_friend_request.html' %}
 {#{% include 'friend/snippets/decline_friend_request.html' %}#}
 {#{% include 'friend/snippets/cancel_friend_request.html' %}#}
 {#{% include 'friend/snippets/remove_friend.html' %}#}

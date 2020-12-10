@@ -96,6 +96,7 @@ def account_view(request, *args, **kwargs):
                 1: YOU_SENT_TO_THEM
     """
     context = {}
+    # 获取当前访问的用户profile的user_id
     user_id = kwargs.get('user_id')
     try:
         account = Account.objects.get(pk=user_id)
@@ -119,12 +120,14 @@ def account_view(request, *args, **kwargs):
         # Define state template variables
         is_self = True
         is_friend = False
+        # 获取当前用户
         user = request.user
         request_sent = FriendRequestStatus.NO_REQUEST_SENT.value
         friend_requests = None
         if user.is_authenticated and user != account:
             is_self = False
-            if friends.filter(pk=user_id):
+            # 如果被访问用户的friend_list中有当前用户user.id，说明是朋友
+            if friends.filter(pk=user.id):
                 is_friend = True
             else:
                 is_friend = False
