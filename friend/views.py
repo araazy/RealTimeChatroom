@@ -124,3 +124,31 @@ def decline_friend_request(request, *args, **kwargs):
     else:
         payload['response'] = 'You must be authenticated to decline a friend request.'
     return HttpResponse(json.dumps(payload), content_type="application/json")
+
+
+def cancel_friend_request(request, *args, **kwargs):
+    user = request.user
+    payload = {}
+    if request.method == "POST" and user.is_authenticated:
+        user_id = request.POST.get("receiver_user_id")
+        if user_id:
+            receiver = Account.objects.get(pk=user_id)
+            try:
+                friend_requests = FriendRequest.objects.filter(sender=user, receiver=receiver, is_active=True)
+            except Exception as e:
+                payload['response'] = "Nothing to cancel. Friend request does not exist."
+            # There should only ever be a single active friend request at any given time.
+            # Cancel them all just in case.
+            if len(friend_requests) > 1:
+                for request in friend_requests:
+                    request.cancel()
+                payload['response'] = "Friend request cancelled."
+            else:
+                # found the request. Now cancel it.
+                friend_requests.first().cancel()
+                payload['response'] = "Friend request cancelled."
+        else:
+            payload['response'] = "Unable to cancel that friend request."
+    else:
+        payload['response'] = "You must be authenticated to cancel a friend request."
+    return HttpResponse(json.dumps(payload), content_type="application/json")
