@@ -49,13 +49,15 @@
             </div>
           </div>
         {% else %}
-          <a href="{% url 'login' %}" class="p-2 text-dark">Login</a>
-          <a href="register" class="btn btn-outline-primary">Register</a>
+          <!-- ?next：用户登录成功后转到该页面，request.get_full_path：当前页面的相对url -->
+          <a href="{% url 'login' %}?next={{request.get_full_path}}" class="p-2 text-dark">Login</a>
+          <a href="{% url 'register' %}?next={{request.get_full_path}}" class="btn btn-outline-primary">Register</a>
         {% endif %}
       </nav>
     </div>
   </div>
   <!-- END MEDIUM+ SCREENS -->
+
   <!-- SMALL SCREENS -->
   <div class="d-flex d-md-none flex-column my-auto align-items-center" id="test">
     <!-- row1：Home -->
@@ -84,8 +86,9 @@
             </div>
           </div>
         {% else %}
-          <a href="{% url 'login' %}" class="p-2 text-dark">Login</a>
-          <a href="{% url 'register' %}" class="btn btn-outline-primary m-2">Register</a>
+          <!-- ?next：用户登录成功后转到该页面，request.get_full_path：当前页面的相对url -->
+          <a href="{% url 'login' %}?next={{request.get_full_path}}" class="p-2 text-dark">Login</a>
+          <a href="{% url 'register' %}?next={{request.get_full_path}}" class="btn btn-outline-primary m-2">Register</a>
         {% endif %}
       </nav>
     </div>

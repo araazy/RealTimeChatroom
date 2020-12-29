@@ -34,7 +34,7 @@
 
 <div class="container-fluid">
 	<div class="row justify-content-center">
-		<div class="card card-signin">
+		<div class="card card-signin">注冊
 		  <div class="card-body">
 		    <form class="form-signin" method="post">{% csrf_token %}
 				<div class="d-flex flex-column pb-3">
@@ -47,19 +47,17 @@
 				<input type="password" name="password1" id="inputPassword1" class="form-control" placeholder="Password" required>
 
 				<input type="password" name="password2" id="inputPassword2" class="form-control" placeholder="Confirm password" required>
-
+        <!-- registration_form是利用Account模型创建的ModelForm，用来简化form创建流程-->
 				{% for field in registration_form %}
-				<p>
-				{% for error in field.errors %}
-				<p style="color: red">{{ error }}</p>
+          {% for error in field.errors %}
+          <p style="color: red">{{ error }}</p>
+          {% endfor %}
 				{% endfor %}
-				</p>
-				{% endfor %}
+
 				{% if registration_form.non_field_errors %}
 				<div style="color: red">
 					<p>{{registration_form.non_field_errors}}</p>
 				</div>
-
 				{% endif %}
 
 				<button class="btn btn-lg btn-primary btn-block" type="submit">Register</button>

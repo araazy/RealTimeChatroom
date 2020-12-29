@@ -1,60 +1,61 @@
-import os
-import cv2
 import json
-import base64
-import requests
-import numpy as np
-from friend.friend_request_status import FriendRequestStatus
-from friend.utils import get_friend_request_or_false
-from django.core import files
+import os
+
+import cv2
 from django.conf import settings
-from account.models import Account
-from friend.models import FriendList, FriendRequest
-from django.db.models import Q
-from django.shortcuts import render, redirect
-from django.http import HttpResponse
 from django.contrib.auth import login, logout, authenticate
-from django.core.files.storage import default_storage, FileSystemStorage
+from django.core import files
+from django.db.models import Q
+from django.http import HttpResponse
+from django.shortcuts import render, redirect
+
 from account.forms import RegistrationForm, AccountAuthenticationForm, AccountUpdateForm
+from account.models import Account
+from friend.friend_request_status import FriendRequestStatus
+from friend.models import FriendList, FriendRequest
+from friend.utils import get_friend_request_or_false
+from .utils import (
+    get_redirect_if_exists,
+    save_temp_profile_image_from_base64String
+)
 
-# temporary image path
-TEMP_PROFILE_IMAGE_NAME = "temp_profile_image.png"
 
-
+# 用户注册视图
 def register_view(request, *args, **kwargs):
     user = request.user
     if user.is_authenticated:
         return HttpResponse(f"You are already authenticated as {user.email}")
-    context = {}
 
+    context = {}
     if request.POST:
         form = RegistrationForm(request.POST)
         if form.is_valid():
-            # create the account
+            # form可以通过表单数据创建对象，并保存到数据库
             form.save()
             email = form.cleaned_data.get('email').lower()
             raw_password = form.cleaned_data.get('password1')
             account = authenticate(email=email, password=raw_password)
             # login
+
             login(request, account)
             destination = get_redirect_if_exists(request)
-            # if redirect is not none
-            if destination:
-                return redirect(destination)
-            return redirect('home')
 
+            return redirect(destination)
         else:
             context['registration_form'] = form
 
     return render(request, 'account/register.html', context)
 
 
+# 退出登录视图
 def logout_view(request, *args, **kwargs):
     logout(request)
     return redirect("home")
 
 
+# 登录视图
 def login_view(request, *args, **kwargs):
+
     context = {}
     user = request.user
     if user.is_authenticated:
@@ -67,25 +68,16 @@ def login_view(request, *args, **kwargs):
             password = request.POST['password']
             user = authenticate(email=email, password=password)
             if user:
+                # 认证成功，登录
                 login(request, user)
                 destination = get_redirect_if_exists(request)
-                if destination:
-                    return redirect(destination)
-                return redirect("home")
+                return redirect(destination)
         else:
             context['login_form'] = form
-
     return render(request, "account/login.html", context)
 
 
-def get_redirect_if_exists(request):
-    redirect = None
-    if request.GET:
-        if request.GET.get("next"):
-            redirect = str(request.GET.get("next"))
-    return redirect
-
-
+# 用户个人信息视图
 def account_view(request, *args, **kwargs):
     """
     - logic here is kind of tricky
@@ -159,32 +151,7 @@ def account_view(request, *args, **kwargs):
         return render(request, "account/account.html", context)
 
 
-def account_search_view(request, *args, **kwargs):
-    context = {}
-    if request.method == "GET":
-        search_query = request.GET.get("q")
-        if len(search_query) > 0:
-
-            # get: single, filter: multiple
-            search_results = Account.objects.filter(
-                Q(username__icontains=search_query) | Q(email__icontains=search_query)
-            )
-            user = request.user
-            accounts = []  # account, is_friend, [(account1, True), (...), ...]
-            if user.is_authenticated:
-                # get the authenticated users friend list
-                auth_user_friend_list = FriendList.objects.get(user=user)
-                for account in search_results:
-                    accounts.append((account, auth_user_friend_list.is_mutual_friend(account)))
-                context['accounts'] = accounts
-            else:
-                for account in search_results:
-                    accounts.append((account, False))
-                context['accounts'] = accounts
-
-    return render(request, "account/search_results.html", context)
-
-
+# 编辑个人信息视图
 def edit_account_view(request, *args, **kwargs):
     if not request.user.is_authenticated:
         return redirect("login")
@@ -229,29 +196,8 @@ def edit_account_view(request, *args, **kwargs):
     return render(request, "account/edit_account.html", context)
 
 
-def save_temp_profile_image_from_base64String(imageString, user):
-    INCORRECT_PADDING_EXCEPTION = "Incorrect padding"
-    try:
-        if not os.path.exists(settings.TEMP):
-            os.mkdir(settings.TEMP)
-        if not os.path.exists(settings.TEMP + "/" + str(user.pk)):
-            os.mkdir(settings.TEMP + "/" + str(user.pk))
-        url = os.path.join(settings.TEMP + "/" + str(user.pk), TEMP_PROFILE_IMAGE_NAME)
-        storage = FileSystemStorage(location=url)
-        image = base64.b64decode(imageString)
-        with storage.open('', 'wb+') as destination:
-            destination.write(image)
-        return url
-    except Exception as e:
-        print("exception: " + str(e))
-        # workaround for an issue I found
-        if str(e) == INCORRECT_PADDING_EXCEPTION:
-            imageString += "=" * ((4 - len(imageString) % 4) % 4)
-            return save_temp_profile_image_from_base64String(imageString, user)
-    return None
-
-
-def crop_image(request, *args, **kwargs):
+# 裁剪图片视图
+def crop_image_view(request, *args, **kwargs):
     payload = {}
     user = request.user
     if request.POST and user.is_authenticated:
@@ -285,3 +231,38 @@ def crop_image(request, *args, **kwargs):
             payload['exception'] = str(e)
 
     return HttpResponse(json.dumps(payload), content_type="application/json")
+
+# 搜索用户视图
+def account_search_view(request, *args, **kwargs):
+    context = {}
+    if request.method == "GET":
+        search_query = request.GET.get("q")
+        if len(search_query) > 0:
+
+            # get: single, filter: multiple
+            search_results = Account.objects.filter(
+                Q(username__icontains=search_query) | Q(email__icontains=search_query)
+            )
+            user = request.user
+            accounts = []  # account, is_friend, [(account1, True), (...), ...]
+            if user.is_authenticated:
+                # get the authenticated users friend list
+                try:
+                    auth_user_friend_list = FriendList.objects.get(user=user)
+                except FriendList.DoesNotExist:
+                    friend_list = FriendList(user=user)
+                    friend_list.save()
+                    auth_user_friend_list = FriendList.objects.get(user=user)
+
+                for account in search_results:
+                    accounts.append((account, auth_user_friend_list.is_mutual_friend(account)))
+                context['accounts'] = accounts
+            else:
+                for account in search_results:
+                    accounts.append((account, False))
+                context['accounts'] = accounts
+
+    return render(request, "account/search_results.html", context)
+
+
+

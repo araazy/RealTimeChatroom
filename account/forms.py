@@ -6,7 +6,7 @@ from account.models import Account
 
 
 class RegistrationForm(UserCreationForm):
-
+    """ 辅助创建注册表单 """
     email = forms.EmailField(max_length=255, help_text="Required. Add a valid email address.")
 
     class Meta:
