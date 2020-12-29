@@ -6,6 +6,7 @@ from friend.models import FriendRequest, FriendList
 
 
 def friend_list_view(request, *args, **kwargs):
+    """ 展示friend列表 """
     context = {}
     user = request.user
     if user.is_authenticated:
@@ -36,6 +37,7 @@ def friend_list_view(request, *args, **kwargs):
 
 
 def friend_requests_view(request, *args, **kwargs):
+    """ 展示他人发送的好友请求 """
     context = {}
     user = request.user
     if user.is_authenticated:
@@ -52,6 +54,7 @@ def friend_requests_view(request, *args, **kwargs):
 
 
 def send_friend_request(request):
+    """ 使用ajax，发送好友请求 """
     user = request.user
     payload = {}
     if request.method == "POST" and user.is_authenticated:
@@ -89,7 +92,9 @@ def send_friend_request(request):
 
 
 def accept_friend_request(request, *args, **kwargs):
+    """ 使用ajax，同意好友请求"""
     user = request.user
+    # ajax请求，让服务器返回一个字典
     payload = {}
     if request.method == "GET" and user.is_authenticated:
         friend_request_id = kwargs.get("friend_request_id")
@@ -112,6 +117,7 @@ def accept_friend_request(request, *args, **kwargs):
 
 
 def remove_friend(request, *args, **kwargs):
+    """ 使用ajax，删除好友 """
     user = request.user
     payload = {}
     if request.method == "POST" and user.is_authenticated:
@@ -133,6 +139,7 @@ def remove_friend(request, *args, **kwargs):
 
 
 def decline_friend_request(request, *args, **kwargs):
+    """ 使用ajax，拒绝好友请求 """
     user = request.user
     payload = {}
     if request.method == "GET" and user.is_authenticated:
@@ -157,6 +164,7 @@ def decline_friend_request(request, *args, **kwargs):
 
 
 def cancel_friend_request(request, *args, **kwargs):
+    """ 使用ajax，取消自己发送的好友请求 """
     user = request.user
     payload = {}
     if request.method == "POST" and user.is_authenticated:

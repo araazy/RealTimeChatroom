@@ -2,16 +2,20 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 
 
-# create a new user
-# create a superuser
 class MyAccountManager(BaseUserManager):
+    """
+    自定义用户管理器
 
+    自定义create a new user
+    自定义create a superuser
+    """
     def create_user(self, email, username, password=None):
         if not email:
             raise ValueError("Users must have an email address.")
         if not username:
             raise ValueError("Users must have a username.")
         user = self.model(
+            # 通过降低电子邮件地址的域部分来规范化电子邮件地址
             email=self.normalize_email(email),
             username=username,
         )
@@ -32,7 +36,7 @@ class MyAccountManager(BaseUserManager):
         return user
 
 
-# 图片存放地址
+# 头像存放地址
 def get_profile_image_filepath(self, filename):
     return f'profile_images/{str(self.pk)}/{"profile_image.png"}'
 
@@ -43,6 +47,9 @@ def get_default_profile_image():
 
 
 class Account(AbstractBaseUser):
+    """
+    使用AbstracBaseUser自定义用户模型
+    """
     email = models.EmailField(verbose_name="email", max_length=60, unique=True)
     username = models.CharField(max_length=30, unique=True)
     date_joined = models.DateTimeField(verbose_name="date joined", auto_now_add=True)
@@ -57,8 +64,9 @@ class Account(AbstractBaseUser):
 
     objects = MyAccountManager()
 
-    # 把USERNAME_FIELD设为email
+    # 把USERNAME_FIELD设为email，USERNAME_FIELD是描述模型字段名的唯一标识符，这里我设置为邮箱
     USERNAME_FIELD = 'email'
+    # 必填字段
     REQUIRED_FIELDS = ['username']
 
     def __str__(self):
