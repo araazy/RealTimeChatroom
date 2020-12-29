@@ -55,7 +55,6 @@ def logout_view(request, *args, **kwargs):
 
 # 登录视图
 def login_view(request, *args, **kwargs):
-
     context = {}
     user = request.user
     if user.is_authenticated:
@@ -80,12 +79,13 @@ def login_view(request, *args, **kwargs):
 # 用户个人信息视图
 def account_view(request, *args, **kwargs):
     """
-    - logic here is kind of tricky
-        is_self (boolean)
-            is_friend (boolean)
+    Friend Requests 提示框逻辑：
+        √ is_self  # 只有自己能看到
+          × is_friend   #
                 -1: NO_REQUEST_SENT
                 0: THEM_SENT_TO_YOU
                 1: YOU_SENT_TO_THEM
+
     """
     context = {}
     # 获取当前访问的用户profile的user_id
@@ -109,7 +109,7 @@ def account_view(request, *args, **kwargs):
         friends = friend_list.friends.all()
         context['friends'] = friends
 
-        # Define state template variables
+        # 模板参数
         is_self = True
         is_friend = False
         # 获取当前用户
@@ -123,14 +123,14 @@ def account_view(request, *args, **kwargs):
                 is_friend = True
             else:
                 is_friend = False
-                # CASE1: Request has been sent from THEM to YOU:
+                # CASE1: 当前被查看用户 对 当前登录用户发送了好友请求
                 if get_friend_request_or_false(sender=account, receiver=user):
                     request_sent = FriendRequestStatus.THEM_SENT_TO_YOU.value
                     context['pending_friend_request_id'] = get_friend_request_or_false(sender=account, receiver=user).id
-                # CASE2: Request has been sent from YOU to THEM:
+                # CASE2: 当前登录用户 对 当前被查看用户发送了好友请求
                 elif get_friend_request_or_false(sender=user, receiver=account):
                     request_sent = FriendRequestStatus.YOU_SENT_TO_THEM.value
-                # CASE#: No request has been sent
+                # CASE3: 没有发送 / 接收好友请求
                 else:
                     request_sent = FriendRequestStatus.NO_REQUEST_SENT.value
         elif not user.is_authenticated:
@@ -139,10 +139,11 @@ def account_view(request, *args, **kwargs):
         else:
             try:
                 friend_requests = FriendRequest.objects.filter(receiver=user, is_active=True)
-            except:
-                # You may have no friends
+            except FriendRequest.DoesNotExist:
+                # 没有好友请求，pass
                 pass
 
+        # 传递模板参数
         context['is_self'] = is_self
         context['is_friend'] = is_friend
         context['BASE_URL'] = settings.BASE_URL
@@ -165,7 +166,7 @@ def edit_account_view(request, *args, **kwargs):
     context = {}
     if request.POST:
         form = AccountUpdateForm(request.POST, request.FILES, instance=request.user)
-        if form.is_valid():
+        if form.is_valid():  # 更新成功，保存并返回
             form.save()
             return redirect("account:view", user_id=account.pk)
         else:
@@ -181,7 +182,7 @@ def edit_account_view(request, *args, **kwargs):
                                      )
             context['form'] = form
     else:
-        # set initial values
+        # 编辑页面需要设置初始值
         form = AccountUpdateForm(
             initial={
                 "id": account.pk,
@@ -197,6 +198,7 @@ def edit_account_view(request, *args, **kwargs):
 
 
 # 裁剪图片视图
+# todo 优化逻辑
 def crop_image_view(request, *args, **kwargs):
     payload = {}
     user = request.user
@@ -232,6 +234,7 @@ def crop_image_view(request, *args, **kwargs):
 
     return HttpResponse(json.dumps(payload), content_type="application/json")
 
+
 # 搜索用户视图
 def account_search_view(request, *args, **kwargs):
     context = {}
@@ -250,10 +253,11 @@ def account_search_view(request, *args, **kwargs):
                 try:
                     auth_user_friend_list = FriendList.objects.get(user=user)
                 except FriendList.DoesNotExist:
+                    # 如果用户暂时没有FriendList，创建一个
                     friend_list = FriendList(user=user)
                     friend_list.save()
                     auth_user_friend_list = FriendList.objects.get(user=user)
-
+                # 当前登录用户，和搜索结果中的用户是否为朋友
                 for account in search_results:
                     accounts.append((account, auth_user_friend_list.is_mutual_friend(account)))
                 context['accounts'] = accounts

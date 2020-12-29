@@ -4,15 +4,15 @@
 		var url = "{% url 'friend:friend-request-accept' friend_request_id=53252623623632623 %}".replace("53252623623632623", friend_request_id)
 		$.ajax({
 			type: 'GET',
-			dataType: "json",
+			dataType: "json",  // 规定ajax GET的参数
 			url: url,
 			timeout: 5000,
 			success: function(data) {
 				console.log("SUCCESS", data)
-				if(data['response'] === "Friend request accepted."){
+				if(data['response'] === "Friend request accepted.") {
 					// ui is updated
 				}
-				else if(data['response'] != null){
+				else if(data['response'] != null) {
 					alert(data['response'])
 				}
 			},

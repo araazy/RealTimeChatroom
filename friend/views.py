@@ -5,34 +5,36 @@ from account.models import Account
 from friend.models import FriendRequest, FriendList
 
 
+# 展示friend列表视图
 def friend_list_view(request, *args, **kwargs):
-    """ 展示friend列表 """
     context = {}
     user = request.user
     if user.is_authenticated:
+        # user_id是写在路由中的参数，以kwargs形式传递
         user_id = kwargs.get("user_id")
         if user_id:
             try:
                 this_user = Account.objects.get(pk=user_id)
-                context['this_user'] = this_user
             except Account.DoesNotExist:
                 return HttpResponse("That user does not exist.")
+            else:
+                context['this_user'] = this_user
             try:
                 friend_list = FriendList.objects.get(user=this_user)
             except FriendList.DoesNotExist:
                 return HttpResponse(f"Could not find a friends list for {this_user.username}")
-            # Must be friends to view a friend list
+
             # 如果当前登录用户不是被查看用户，并且不是被查看用户的朋友，你没有权限观看他的好友列表
             if user != this_user and user not in friend_list.friends.all():
                 return HttpResponse("You must be friends to view their friends list.")
-            # 当前用户与被查看用户的朋友也是朋友，True
-            friends = []  # [(account1, True)..]
+
+            friends = []  # [(account1, True)..] 当前用户与被查看用户的朋友也是朋友，True
             auth_user_friend_list = FriendList.objects.get(user=user)
             for friend in friend_list.friends.all():
                 friends.append((friend, auth_user_friend_list.is_mutual_friend(friend)))
             context['friends'] = friends
         else:
-            return HttpResponse("You must be friends to view their friends list.")
+            return HttpResponse("You must be friends to view their friends.")
         return render(request, "friend/friend_list.html", context)
 
 
@@ -91,8 +93,8 @@ def send_friend_request(request):
     return HttpResponse(json.dumps(payload), content_type="application/json")
 
 
+# 使用ajax，同意好友请求
 def accept_friend_request(request, *args, **kwargs):
-    """ 使用ajax，同意好友请求"""
     user = request.user
     # ajax请求，让服务器返回一个字典
     payload = {}
@@ -116,8 +118,8 @@ def accept_friend_request(request, *args, **kwargs):
     return HttpResponse(json.dumps(payload), content_type="application/json")
 
 
+# 使用ajax，删除好友
 def remove_friend(request, *args, **kwargs):
-    """ 使用ajax，删除好友 """
     user = request.user
     payload = {}
     if request.method == "POST" and user.is_authenticated:
@@ -138,8 +140,8 @@ def remove_friend(request, *args, **kwargs):
     return HttpResponse(json.dumps(payload), content_type="application/json")
 
 
+# 使用ajax，拒绝好友请求
 def decline_friend_request(request, *args, **kwargs):
-    """ 使用ajax，拒绝好友请求 """
     user = request.user
     payload = {}
     if request.method == "GET" and user.is_authenticated:

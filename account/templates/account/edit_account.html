@@ -54,11 +54,10 @@
           <!-- 使用ajax接管表单的提交，所以不需要enctype="multipart/form-data" -->
 		  		<form class="form-signin" method="post">{% csrf_token %}
 		  			<input class="d-none" type="file" name="profile_image" id="id_profile_image" onchange="readURL(this)">
-			  		<h6 class="mt-4 field-heading">Email</h6>
+			  		  <h6 class="mt-4 field-heading">Email</h6>
 			  		<input type="email" name="email" id="id_input_email" class="form-control" placeholder="Email address" required autofocus value={{form.initial.email}}>
-			  		<h6 class="mt-4 field-heading">Username</h6>
-			  		<input type="text" name="username" id="id_input_username" class="form-control" placeholder="Username" required
-					value="{{form.initial.username}}">
+			  		  <h6 class="mt-4 field-heading">Username</h6>
+			  		<input type="text" name="username" id="id_input_username" class="form-control" placeholder="Username" required value="{{form.initial.username}}">
 					<div class="mt-4 checkbox">
 						<label>
 							<input type="checkbox" name="hide_email" id="id_input_hide_email" {% if form.initial.hide_email %}checked{%endif%}>
@@ -68,17 +67,15 @@
 					</div>
 
 					{% for field in form %}
-					<p>
-					{% for error in field.errors %}
-					<p style="color: red">{{ error }}</p>
+            {% for error in field.errors %}
+            <p style="color: red">{{ error }}</p>
+            {% endfor %}
 					{% endfor %}
-					</p>
-					{% endfor %}
-					{% if form.non_field_errors %}
-					<div style="color: red">
-					<p>{{form.non_field_errors}}</p>
-					</div>
 
+					{% if form.non_field_errors %}
+            <div style="color: red">
+            <p>{{form.non_field_errors}}</p>
+            </div>
 					{% endif %}
 
 					<div class="d-flex flex-column mt-4">
