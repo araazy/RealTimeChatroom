@@ -6,7 +6,7 @@ from django.conf import settings
 from django.contrib.auth import login, logout, authenticate
 from django.core import files
 from django.db.models import Q
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect
 
 from account.forms import RegistrationForm, AccountAuthenticationForm, AccountUpdateForm
@@ -232,7 +232,8 @@ def crop_image_view(request, *args, **kwargs):
             payload['result'] = "error"
             payload['exception'] = str(e)
 
-    return HttpResponse(json.dumps(payload), content_type="application/json")
+
+    return JsonResponse(payload)
 
 
 # 搜索用户视图

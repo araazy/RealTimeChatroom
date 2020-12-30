@@ -1,6 +1,6 @@
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect
-from django.http import HttpResponse
-import json
+
 from account.models import Account
 from friend.models import FriendRequest, FriendList
 
@@ -71,26 +71,26 @@ def send_friend_request(request):
                     for request in friend_requests:
                         if request.is_active:
                             raise Exception("You already sent them a friend request.")
-                    # If none are active, then create a new friend request
+                    # 如果没有有效的好友请求，重新创建，发送请求
                     friend_request = FriendRequest(sender=user, receiver=receiver)
                     friend_request.save()
                     payload['response'] = 'Friend request sent.'
                 except Exception as e:
                     payload['response'] = str(e)
             except FriendRequest.DoesNotExist:
-                # There are no friend requests so create one
+                #  没有好友请求，则创建
                 friend_request = FriendRequest(sender=user, receiver=receiver)
                 friend_request.save()
                 payload['response'] = "Friend request sent."
 
             if payload['response'] is None:
-                print()
                 payload['response'] = "Something went wrong."
         else:
             payload['response'] = "Unable to sent a friend request."
     else:
         payload['response'] = "You must be authenticated to send a friend request."
-    return HttpResponse(json.dumps(payload), content_type="application/json")
+
+    return JsonResponse(payload)
 
 
 # 使用ajax，同意好友请求
@@ -115,7 +115,8 @@ def accept_friend_request(request, *args, **kwargs):
             payload['response'] = "Unable to accept that friend request."
     else:
         payload['response'] = "You must be authenticated to accept a friend request."
-    return HttpResponse(json.dumps(payload), content_type="application/json")
+
+    return JsonResponse(payload)
 
 
 # 使用ajax，删除好友
@@ -137,7 +138,8 @@ def remove_friend(request, *args, **kwargs):
             payload['response'] = "There was an error. unable to remove that friend."
     else:
         payload['response'] = "You must be authenticated to remove a friend."
-    return HttpResponse(json.dumps(payload), content_type="application/json")
+
+    return JsonResponse(payload)
 
 
 # 使用ajax，拒绝好友请求
@@ -162,7 +164,8 @@ def decline_friend_request(request, *args, **kwargs):
             payload['response'] = "Unable to decline that friend request."
     else:
         payload['response'] = 'You must be authenticated to decline a friend request.'
-    return HttpResponse(json.dumps(payload), content_type="application/json")
+
+    return JsonResponse(payload)
 
 
 def cancel_friend_request(request, *args, **kwargs):
@@ -191,4 +194,6 @@ def cancel_friend_request(request, *args, **kwargs):
             payload['response'] = "Unable to cancel that friend request."
     else:
         payload['response'] = "You must be authenticated to cancel a friend request."
-    return HttpResponse(json.dumps(payload), content_type="application/json")
+
+    return JsonResponse(payload)
+

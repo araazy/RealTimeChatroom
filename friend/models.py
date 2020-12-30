@@ -57,7 +57,7 @@ class FriendRequest(models.Model):
     sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="sender")
     receiver = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="receiver")
 
-    is_active = models.BooleanField(blank=False, null=False, default=True)
+    is_active = models.BooleanField(blank=False, null=False, default=True)  # 好友请求是否有效
 
     timestamp = models.DateTimeField(auto_now_add=True)
 
@@ -83,7 +83,7 @@ class FriendRequest(models.Model):
         Decline a friend request.
         Is it "declined" by setting the `is_active` field to False
         """
-        self.is_active = False
+        self.is_active = False  # 拒绝好友请求，即将请求设为失效
         self.save()
 
     def cancel(self):
