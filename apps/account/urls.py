@@ -1,5 +1,5 @@
 from django.urls import path
-from account.views import (
+from apps.account.views import (
     account_view,
     edit_account_view,
     crop_image_view,
