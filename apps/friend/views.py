@@ -142,8 +142,8 @@ def remove_friend(request, *args, **kwargs):
     return JsonResponse(payload)
 
 
-# 使用ajax，拒绝好友请求
 def decline_friend_request(request, *args, **kwargs):
+    """ 处理ajax，拒绝好友请求 """
     user = request.user
     payload = {}
     if request.method == "GET" and user.is_authenticated:

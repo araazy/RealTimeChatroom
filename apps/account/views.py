@@ -35,8 +35,8 @@ def register_view(request, *args, **kwargs):
             raw_password = form.cleaned_data.get('password1')
             account = authenticate(email=email, password=raw_password)
             # login
-
             login(request, account)
+            # 回到来访问的页面
             destination = get_redirect_if_exists(request)
 
             return redirect(destination)
@@ -197,7 +197,6 @@ def edit_account_view(request, *args, **kwargs):
 
 
 # 裁剪图片视图
-# todo 优化逻辑
 def crop_image_view(request, *args, **kwargs):
     payload = {}
     user = request.user
@@ -230,7 +229,6 @@ def crop_image_view(request, *args, **kwargs):
             print("exception: " + str(e))
             payload['result'] = "error"
             payload['exception'] = str(e)
-
 
     return JsonResponse(payload)
 
@@ -267,6 +265,3 @@ def account_search_view(request, *args, **kwargs):
                 context['accounts'] = accounts
 
     return render(request, "account/search_results.html", context)
-
-
-
