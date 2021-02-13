@@ -44,3 +44,23 @@ class PublicChatroom(models.Model):
 
         """
         return f"PublicChatRoom-{self.id}"
+
+
+class PublicChatroomMessageManager(models.Manager):
+    def by_room(self, room):
+        # retrieve the newest message first
+        qs = PublicChatroomMessage.objects.filter(room=room).order_by("-timestamp")
+        return qs
+
+
+class PublicChatroomMessage(models.Model):
+    """
+    Chat message created by a user inside a PublicChatroom (foreign key)
+    """
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    room = models.ForeignKey(PublicChatroom, on_delete=models.CASCADE)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    content = models.TextField(unique=False, blank=False)
+
+    def __str__(self):
+        return self.content
