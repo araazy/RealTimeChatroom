@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     'personal',
     'account',
     'friend',
+    'public_chat',
 
     # 自带app
     'django.contrib.admin',
