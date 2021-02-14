@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'channels',
 ]
 
 MIDDLEWARE = [
@@ -73,7 +74,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'ChatServerPlayground.wsgi.application'
-
+ASGI_APPLICATION = 'ChatServerPlayground.routing.application'
 
 # Database 使用Postgres
 DB_NAME = 'chat_server_playground'
@@ -90,7 +91,7 @@ DATABASES = {
     }
 }
 
-# Redis配置
+# Channels配置
 CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
