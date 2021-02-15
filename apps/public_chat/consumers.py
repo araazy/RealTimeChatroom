@@ -1,6 +1,9 @@
 import json
+from datetime import datetime
 
 from django.contrib.auth import get_user_model
+from django.contrib.humanize.templatetags.humanize import naturalday, naturaltime
+from django.utils import timezone
 
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 
@@ -67,12 +70,14 @@ class PublicChatConsumer(AsyncJsonWebsocketConsumer):
         """
         # Send a message down to the client
         print("PublicChatConsumer: chat_message from user #" + str(event["user_id"]))
+        timestamp = calculate_timestamp(timezone.now())
         await self.send_json({
                 "msg_type": MSG_TYPE_MESSAGE,
                 "profile_image": event["profile_image"],
                 "username": event["username"],
                 "user_id": event["user_id"],
                 "message": event["message"],
+                "natural_timestamp": timestamp,
             },
         )
 
@@ -86,3 +91,19 @@ class ClientError(Exception):
         self.code = code
         if message:
             self.message = message
+
+
+def calculate_timestamp(timestamp):
+    """
+
+    """
+    # today or yesterday
+    if (naturalday(timestamp) == "today") or (naturalday(timestamp) == "yesterday"):
+        str_time = datetime.strftime(timestamp, "%I:%M %p")
+        str_time = str_time.strip("0")
+        ts = f"{naturalday(timestamp)} at {str_time}"
+    # other days
+    else:
+        str_time = datetime.strftime(timestamp, "%m/%d/%Y")
+        ts = f"{str_time}"
+    return str(ts)
