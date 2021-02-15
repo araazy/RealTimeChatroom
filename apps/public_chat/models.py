@@ -62,5 +62,7 @@ class PublicChatroomMessage(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)
     content = models.TextField(unique=False, blank=False)
 
+    objects = PublicChatroomMessageManager()
+
     def __str__(self):
         return self.content

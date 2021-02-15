@@ -1,6 +1,9 @@
 import json
 from datetime import datetime
 
+from django.core.serializers import serialize
+from django.core.serializers.python import Serializer
+from django.core.paginator import Paginator
 from django.contrib.auth import get_user_model
 from django.contrib.humanize.templatetags.humanize import naturalday, naturaltime
 from django.utils import timezone
@@ -11,6 +14,7 @@ from channels.db import database_sync_to_async
 from public_chat.models import PublicChatroom, PublicChatroomMessage
 
 MSG_TYPE_MESSAGE = 0  # 正常消息
+DEFAULT_ROOM_CHAT_MESSAGE_PAGE_SIZE = 10
 
 User = get_user_model()
 
@@ -55,6 +59,14 @@ class PublicChatConsumer(AsyncJsonWebsocketConsumer):
             elif command == "leave":
                 # Leave the room
                 await self.leave_room(content["room_id"])
+            elif command == "get_room_chat_messages":
+                room = await get_room_or_error(content['room_id'])
+                payload = await get_room_chat_messages(room, content['page_number'])
+                if payload is not None:
+                    payload = json.loads(payload)
+                    await self.send_messages_payload(payload['messages'], payload['new_page_number'])
+                else:
+                    raise ClientError(204, "聊天记录获取错误.")
         except ClientError as e:
             await self.handle_client_error(e)
 
@@ -165,6 +177,18 @@ class PublicChatConsumer(AsyncJsonWebsocketConsumer):
             errorData['message'] = e.message
             await self.send_json(errorData)
 
+    async def send_messages_payload(self, messages, new_page_number):
+        """
+        Send a payload of messages to the ui
+        """
+        print("PublicChatConsumer: send_messages_payload. ")
+
+        await self.send_json({
+                "messages_payload": "messages_payload",
+                "messages": messages,
+                "new_page_number": new_page_number,
+            })
+
 
 def is_authenticated(user):
     return user.is_authenticated
@@ -223,3 +247,42 @@ def calculate_timestamp(timestamp):
         str_time = datetime.strftime(timestamp, "%m/%d/%Y")
         ts = f"{str_time}"
     return str(ts)
+
+
+@database_sync_to_async
+def get_room_chat_messages(room, page_number):
+    try:
+        qs = PublicChatroomMessage.objects.by_room(room)
+        p = Paginator(qs, DEFAULT_ROOM_CHAT_MESSAGE_PAGE_SIZE)
+
+        payload = {}
+
+        new_page_number = int(page_number)
+        if new_page_number <= p.num_pages:
+            new_page_number = new_page_number + 1
+            s = LazyRoomChatMessageEncoder()
+            payload['messages'] = s.serialize(p.page(page_number).object_list)
+        else:
+            payload['messages'] = "None"
+        payload['new_page_number'] = new_page_number
+        return json.dumps(payload)
+
+    except Exception as e:
+        print("EXCEPTION: " + str(e))
+        return None
+
+
+class LazyRoomChatMessageEncoder(Serializer):
+    """
+    自定义序列化器
+    """
+
+    def get_dump_object(self, obj):
+        json_data = {}
+        json_data.update({'msg_type': MSG_TYPE_MESSAGE})
+        json_data.update({'user_id': str(obj.user.id)})
+        json_data.update({'username': str(obj.user.username)})
+        json_data.update({'message': str(obj.content)})
+        json_data.update({'profile_image': str(obj.user.profile_image.url)})
+        json_data.update({'natural_timestamp': calculate_timestamp(obj.timestamp)})
+        return json_data
