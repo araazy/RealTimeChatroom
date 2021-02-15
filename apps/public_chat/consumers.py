@@ -8,7 +8,7 @@ from django.utils import timezone
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from channels.db import database_sync_to_async
 
-from public_chat.models import PublicChatroom
+from public_chat.models import PublicChatroom, PublicChatroomMessage
 
 MSG_TYPE_MESSAGE = 0  # 正常消息
 
@@ -74,6 +74,8 @@ class PublicChatConsumer(AsyncJsonWebsocketConsumer):
 
         # Get the room and send to the group about it
         room = await get_room_or_error(room_id)
+
+        await create_public_room_chat_message(room, self.scope['user'], message)
 
         await self.channel_layer.group_send(
             room.group_name,
@@ -166,6 +168,11 @@ class PublicChatConsumer(AsyncJsonWebsocketConsumer):
 
 def is_authenticated(user):
     return user.is_authenticated
+
+
+@database_sync_to_async
+def create_public_room_chat_message(room, user, message):
+    return PublicChatroomMessage.objects.create(user=user, room=room, content=message)
 
 
 @database_sync_to_async
