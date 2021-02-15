@@ -4,6 +4,7 @@ from django.contrib.auth import get_user_model
 
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 
+MSG_TYPE_MESSAGE = 0  # 正常消息
 
 User = get_user_model()
 
@@ -35,10 +36,17 @@ class PublicChatConsumer(AsyncJsonWebsocketConsumer):
         command = content.get("command", None)
         message = content.get("message", None)
         print(f"PublicChatConsumer: receive_json: command: {command}, message: {message}")
-        if command == "send":
-            if len(content['message'].lstrip()) == 0:
-                raise Exception("无法发送空白消息")
-            await self.send_message(content['message'])
+        try:
+            if command == "send":
+                if len(content['message'].lstrip()) == 0:
+                    raise ClientError(422, "无法发送空白消息")  # HTTP 状态码422 Unprocessable Entity
+                await self.send_message(content['message'])
+        except ClientError as e:
+            errorData = {'error': e.code}
+
+            if e.message:
+                errorData['message'] = e.message
+            await self.send_json(errorData)
 
     async def send_message(self, message):
         await self.channel_layer.group_send(
@@ -60,9 +68,21 @@ class PublicChatConsumer(AsyncJsonWebsocketConsumer):
         # Send a message down to the client
         print("PublicChatConsumer: chat_message from user #" + str(event["user_id"]))
         await self.send_json({
+                "msg_type": MSG_TYPE_MESSAGE,
                 "profile_image": event["profile_image"],
                 "username": event["username"],
                 "user_id": event["user_id"],
                 "message": event["message"],
             },
         )
+
+
+class ClientError(Exception):
+    """
+
+    """
+    def __init__(self, code, message):
+        super().__init__(code)
+        self.code = code
+        if message:
+            self.message = message

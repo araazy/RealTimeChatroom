@@ -84,8 +84,14 @@
 		public_chat_socket.onmessage = function(message) {
 			console.log("Got chat websocket message " + message.data);
 			var data = JSON.parse(message.data)
-        // 添加消息ui
-        appendChatMessage(data)
+
+        if (data.error) {
+            showClientErrorModal(data.message);
+        }
+        if (data.msg_type === 0) {
+            // 添加消息ui
+            appendChatMessage(data)
+        }
 		};
 
 		public_chat_socket.addEventListener("open", function(e) {
@@ -191,7 +197,33 @@
 		win.focus()
 	}
 
+  function showClientErrorModal(message){
+		document.getElementById("id_client_error_modal_body").innerHTML = message
+		document.getElementById("id_trigger_client_error_modal").click()
+	}
 </script>
 
+  <!-- Client Error MODAL -->
+<button type="button" id="id_trigger_client_error_modal" class="d-none btn btn-primary" data-toggle="modal" data-target="#id_client_error_modal">
+</button>
+<div class="modal fade" id="id_client_error_modal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Socket Client Error</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p id="id_client_error_modal_body">Something went wrong.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal" id="id_client_error_modal_close_btn">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Client Error MODAL -->
 
 {% endblock content %}
