@@ -12,9 +12,7 @@ from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from channels.db import database_sync_to_async
 
 from public_chat.models import PublicChatroom, PublicChatroomMessage
-
-MSG_TYPE_MESSAGE = 0  # 正常消息
-DEFAULT_ROOM_CHAT_MESSAGE_PAGE_SIZE = 10
+from .constants import MSG_TYPE_CONNECTED_USER_COUNT, MSG_TYPE_MESSAGE, DEFAULT_ROOM_CHAT_MESSAGE_PAGE_SIZE
 
 User = get_user_model()
 
@@ -60,6 +58,7 @@ class PublicChatConsumer(AsyncJsonWebsocketConsumer):
                 # Leave the room
                 await self.leave_room(content["room_id"])
             elif command == "get_room_chat_messages":
+                await self.display_progress_bar(True)
                 room = await get_room_or_error(content['room_id'])
                 payload = await get_room_chat_messages(room, content['page_number'])
                 if payload is not None:
@@ -67,7 +66,9 @@ class PublicChatConsumer(AsyncJsonWebsocketConsumer):
                     await self.send_messages_payload(payload['messages'], payload['new_page_number'])
                 else:
                     raise ClientError(204, "聊天记录获取错误.")
+                await self.display_progress_bar(False)
         except ClientError as e:
+            await self.display_progress_bar(False)
             await self.handle_client_error(e)
 
     async def send_room(self, room_id, message):
@@ -90,9 +91,8 @@ class PublicChatConsumer(AsyncJsonWebsocketConsumer):
         await create_public_room_chat_message(room, self.scope['user'], message)
 
         await self.channel_layer.group_send(
-            room.group_name,
-            {
-                "type": "chat.message",
+            room.group_name, {
+                "type": "chat.message",  # 调用函数chat_message()
                 "profile_image": self.scope["user"].profile_image.url,
                 "username": self.scope["user"].username,
                 "user_id": self.scope["user"].id,
@@ -115,8 +115,7 @@ class PublicChatConsumer(AsyncJsonWebsocketConsumer):
             "user_id": event["user_id"],
             "message": event["message"],
             "natural_timestamp": timestamp,
-        },
-        )
+        })
 
     async def join_room(self, room_id):
         """
@@ -147,6 +146,12 @@ class PublicChatConsumer(AsyncJsonWebsocketConsumer):
                 "join": str(room.id)
             })
 
+            num_connected_users = get_num_connected_users(room)
+            await self.channel_layer.group_send(room.group_name, {
+                "type": "connected.user.count",  # 调用函数connected_user_count()
+                "connected_user_count": num_connected_users,
+            })
+
     async def leave_room(self, room_id):
         """
         Called by receive_json when someone sent a leave command.
@@ -167,6 +172,12 @@ class PublicChatConsumer(AsyncJsonWebsocketConsumer):
             self.channel_name,
         )
 
+        num_connected_users = get_num_connected_users(room)
+        await self.channel_layer.group_send(room.group_name, {
+            "type": "connected.user.count",  # 调用函数connected_user_count()
+            "connected_user_count": num_connected_users,
+        })
+
     async def handle_client_error(self, e):
         """
         Called when a ClientError is raised.
@@ -179,19 +190,51 @@ class PublicChatConsumer(AsyncJsonWebsocketConsumer):
 
     async def send_messages_payload(self, messages, new_page_number):
         """
-        Send a payload of messages to the ui
+        按分页形式，加载之前的消息
+        Parameters
+        ----------
+        messages: 消息
+        new_page_number: 页号
+
+        Returns
+        -------
+
         """
         print("PublicChatConsumer: send_messages_payload. ")
 
         await self.send_json({
-                "messages_payload": "messages_payload",
-                "messages": messages,
-                "new_page_number": new_page_number,
-            })
+            "messages_payload": "messages_payload",
+            "messages": messages,
+            "new_page_number": new_page_number,
+        })
+
+    async def display_progress_bar(self, is_displayed):
+        print("DISPLAY PROGRESS BAR: " + str(is_displayed))
+        await self.send_json({
+            "display_progress_bar": is_displayed
+        })
+
+    async def connected_user_count(self, event):
+        """
+        Called to send the number of connected users to the room.
+        This number is displayed in the room so other users know how many users are connected to the chat.
+        """
+        # Send a message down to the client
+        print("PublicChatConsumer: connected_user_count: count: " + str(event["connected_user_count"]))
+        await self.send_json({
+            "msg_type": MSG_TYPE_CONNECTED_USER_COUNT,
+            "connected_user_count": event["connected_user_count"]
+        })
 
 
 def is_authenticated(user):
     return user.is_authenticated
+
+
+def get_num_connected_users(room):
+    if room.users:
+        return len(room.users.all())
+    return 0
 
 
 @database_sync_to_async
