@@ -20,5 +20,22 @@
 			}
 		}
 	}
-
+  function validateText(str) {
+    // markdown-it github page
+		var md = window.markdownit({
+			highlight: function (str, lang) {
+				if (lang && hljs.getLanguage(lang)) {
+					try {
+						return '<pre class="hljs"><code>' +
+							hljs.highlight(lang, str, true).value +
+							'</code></pre>';
+					} catch (__) {}
+				}
+				return '<pre class="hljs"><code>' + md.utils.escapeHtml(str) + '</code></pre>';
+			},
+			linkify: true,
+		});
+		var result = md.render(str);
+		return result
+	}
 </script>
