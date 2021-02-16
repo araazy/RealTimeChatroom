@@ -324,6 +324,7 @@ class LazyRoomChatMessageEncoder(Serializer):
         json_data = {}
         json_data.update({'msg_type': MSG_TYPE_MESSAGE})
         json_data.update({'user_id': str(obj.user.id)})
+        json_data.update({'msg_id': str(obj.id)})
         json_data.update({'username': str(obj.user.username)})
         json_data.update({'message': str(obj.content)})
         json_data.update({'profile_image': str(obj.user.profile_image.url)})
