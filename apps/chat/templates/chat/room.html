@@ -222,7 +222,25 @@
       createOrReturnPrivateChat(userId)
     }
 
+    /*
+      Retrieve the user information of the user other in the chat.
+      1. Profile image
+      2. username
+      3. etc...
+    */
+    function getUserInfo(){
+      chatSocket.send(JSON.stringify({
+        "command": "get_user_info",
+        "room_id": roomId,
+      }));
+    }
 
+    function handleUserInfoPayload(user_info){
+      document.getElementById("id_other_username").innerHTML = user_info['username']
+      document.getElementById("id_other_user_profile_image").classList.remove("d-none")
+      document.getElementById("id_user_info_container").href= "{% url 'account:view' user_id=53252623623632623 %}".replace("53252623623632623", user_info['id'])
+      preloadImage(user_info['profile_image'], "id_other_user_profile_image")
+    }
 
     function setupWebSocket(room_id) {
 
@@ -245,39 +263,44 @@
       // console.log("Connecting to " + ws_path);
       chatSocket = new WebSocket(ws_path);
 
-      // Handle incoming messages
+      // 处理服务器发来的消息
       chatSocket.onmessage = function(message) {
         // Decode the JSON
         // console.log("Got chat websocket message " + message.data);
-        console.log("Got websocket message.");
+        console.log("收到WebSocket消息~~~");
         var data = JSON.parse(message.data);
 
         // display the progress bar?
-        displayChatroomLoadingSpinner(data.display_progress_bar)
+        {#displayChatroomLoadingSpinner(data.display_progress_bar)#}
 
         // Handle errors (ClientError)
         if (data.error) {
           console.error(data.error + ": " + data.message);
           return;
         }
-        // Handle joining (Client perspective)
+        // 处理加入
         if (data.join) {
           console.log("Joining room " + data.join);
+          getUserInfo();
         }
         // Handle leaving (client perspective)
         if (data.leave) {
           // do nothing
           console.log("Leaving room " + data.leave);
         }
+        // user info coming in from backend
+        if(data.user_info) {
+          handleUserInfoPayload(data.user_info)
+        }
       };
 
       chatSocket.addEventListener("open", function(e){
         console.log("ChatSocket OPEN")
-        // join chat room
+        // 进行聊天
         if("{{request.user.is_authenticated}}"){
           chatSocket.send(JSON.stringify({
             "command": "join",
-            "room": roomId
+            "room_id": roomId
           }));
         }
       })

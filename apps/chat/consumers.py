@@ -1,4 +1,11 @@
+import json
+
+from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
+
+from account.utils import LazyAccountEncoder
+from chat.models import PrivateChatroom
+from friend.models import FriendList
 
 
 class ChatConsumer(AsyncJsonWebsocketConsumer):
@@ -25,7 +32,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         command = content.get("command", None)
         try:
             if command == "join":
-                pass
+                await self.join_room(content['room_id'])
             elif command == "leave":
                 pass
             elif command == "send":
@@ -33,7 +40,13 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             elif command == "get_room_chat_messages":
                 pass
             elif command == "get_user_info":
-                pass
+                room = await get_room_or_error(content['room_id'], self.scope["user"])
+                payload = get_user_info(room, self.scope["user"])
+                if payload is not None:
+                    payload = json.loads(payload)
+                    await self.send_user_info_payload(payload['user_info'])
+                else:
+                    raise Exception("Something went wrong retrieving the other users account details.")
         except Exception as e:
             pass
 
@@ -51,6 +64,14 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         """
         # The logged-in user is in our scope thanks to the authentication ASGI middleware (AuthMiddlewareStack)
         print("ChatConsumer: join_room: " + str(room_id))
+        try:
+            room = await get_room_or_error(room_id, self.scope["user"])
+        except Exception as e:
+            return
+            # Instruct their client to finish opening the room
+        await self.send_json({
+            "join": str(room.id),
+        })
 
     async def leave_room(self, room_id):
         """
@@ -98,6 +119,9 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         Send a payload of user information to the ui
         """
         print("ChatConsumer: send_user_info_payload. ")
+        await self.send_json({
+                "user_info": user_info,
+        })
 
     async def display_progress_bar(self, is_displayed):
         """
@@ -107,3 +131,46 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             - Hide the progress bar on UI
         """
         print("DISPLAY PROGRESS BAR: " + str(is_displayed))
+
+
+@database_sync_to_async
+def get_room_or_error(room_id, user):
+    """
+    获取聊天会话
+    """
+    try:
+        room = PrivateChatroom.objects.get(pk=room_id)
+    except PrivateChatroom.DoesNotExist:
+        raise Exception("Invalid room.")
+
+    # Is this user allowed in the room? (must be user1 or user2)
+    if user != room.user1 and user != room.user2:
+        raise Exception("You do not have permission to join this room.")
+
+    # Are the users in this room friends?
+    friend_list = FriendList.objects.get(user=user).friends.all()
+    if room.user1 not in friend_list:
+        if room.user2 not in friend_list:
+            raise Exception("You must be friends to chat.")
+    return room
+
+
+def get_user_info(room, user):
+    """
+    获取聊天对象的消息
+    """
+    try:
+        # Determine who is who
+        other_user = room.user1
+        if other_user == user:
+            other_user = room.user2
+
+        payload = {}
+        s = LazyAccountEncoder()
+        # convert to list for serializer and select first entry (there will be only 1)
+        payload['user_info'] = s.serialize([other_user])[0]
+        return json.dumps(payload)
+    except Exception as e:
+        print("EXCEPTION: " + str(e))
+
+    return None

@@ -3,6 +3,8 @@ import os
 
 from django.conf import settings
 from django.core.files.storage import FileSystemStorage
+from django.core.serializers.python import Serializer
+
 
 # temporary image path
 TEMP_PROFILE_IMAGE_NAME = "temp_profile_image.png"
@@ -52,4 +54,11 @@ def save_temp_profile_image_from_base64String(imageString, user):
     return None
 
 
-
+class LazyAccountEncoder(Serializer):
+    def get_dump_object(self, obj):
+        json_data = {}
+        json_data.update({'id': str(obj.id)})
+        json_data.update({'email': str(obj.email)})
+        json_data.update({'username': str(obj.username)})
+        json_data.update({'profile_image': str(obj.profile_image.url)})
+        return json_data
