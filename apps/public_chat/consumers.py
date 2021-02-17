@@ -1,18 +1,15 @@
 import json
-from datetime import datetime
 
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
-from django.contrib.auth import get_user_model
-from django.contrib.humanize.templatetags.humanize import naturalday
 from django.core.paginator import Paginator
 from django.core.serializers.python import Serializer
 from django.utils import timezone
 
+from chat.exceptions import ClientError
+from chat.utils import calculate_timestamp
 from public_chat.models import PublicChatroom, PublicChatroomMessage
 from .constants import MSG_TYPE_CONNECTED_USER_COUNT, MSG_TYPE_MESSAGE, DEFAULT_ROOM_CHAT_MESSAGE_PAGE_SIZE
-
-User = get_user_model()
 
 
 class PublicChatConsumer(AsyncJsonWebsocketConsumer):
@@ -260,34 +257,6 @@ def get_room_or_error(room_id):
     except PublicChatroom.DoesNotExist:
         raise ClientError("ROOM_INVALID", "房间不存在")
     return room
-
-
-class ClientError(Exception):
-    """
-
-    """
-
-    def __init__(self, code, message):
-        super().__init__(code)
-        self.code = code
-        if message:
-            self.message = message
-
-
-def calculate_timestamp(timestamp):
-    """
-
-    """
-    # today or yesterday
-    if (naturalday(timestamp) == "today") or (naturalday(timestamp) == "yesterday"):
-        str_time = datetime.strftime(timestamp, "%I:%M %p")
-        str_time = str_time.strip("0")
-        ts = f"{naturalday(timestamp)} at {str_time}"
-    # other days
-    else:
-        str_time = datetime.strftime(timestamp, "%m/%d/%Y")
-        ts = f"{str_time}"
-    return str(ts)
 
 
 @database_sync_to_async

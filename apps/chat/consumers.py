@@ -4,6 +4,7 @@ from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 
 from account.utils import LazyAccountEncoder
+from chat.exceptions import ClientError
 from chat.models import PrivateChatroom
 from friend.models import FriendList
 
@@ -46,9 +47,9 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                     payload = json.loads(payload)
                     await self.send_user_info_payload(payload['user_info'])
                 else:
-                    raise Exception("Something went wrong retrieving the other users account details.")
-        except Exception as e:
-            pass
+                    raise ClientError('', "Something went wrong retrieving the other users account details.")
+        except ClientError as e:
+            await self.handle_client_error(e)
 
     async def disconnect(self, code):
         """
@@ -66,8 +67,8 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         print("ChatConsumer: join_room: " + str(room_id))
         try:
             room = await get_room_or_error(room_id, self.scope["user"])
-        except Exception as e:
-            return
+        except ClientError as e:
+            return await self.handle_client_error(e)
             # Instruct their client to finish opening the room
         await self.send_json({
             "join": str(room.id),
@@ -108,6 +109,18 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         # Send a message down to the client
         print("ChatConsumer: chat_message")
 
+    async def handle_client_error(self, e):
+        """
+        Called when a ClientError is raised.
+        Sends error data to UI.
+        """
+        errorData = {}
+        errorData['error'] = e.code
+        if e.message:
+            errorData['message'] = e.message
+            await self.send_json(errorData)
+        return
+
     async def send_messages_payload(self, messages, new_page_number):
         """
         Send a payload of messages to the ui
@@ -141,17 +154,17 @@ def get_room_or_error(room_id, user):
     try:
         room = PrivateChatroom.objects.get(pk=room_id)
     except PrivateChatroom.DoesNotExist:
-        raise Exception("Invalid room.")
+        raise ClientError("Invalid room.")
 
     # Is this user allowed in the room? (must be user1 or user2)
     if user != room.user1 and user != room.user2:
-        raise Exception("You do not have permission to join this room.")
+        raise ClientError("You do not have permission to join this room.")
 
     # Are the users in this room friends?
     friend_list = FriendList.objects.get(user=user).friends.all()
     if room.user1 not in friend_list:
         if room.user2 not in friend_list:
-            raise Exception("You must be friends to chat.")
+            raise ClientError("You must be friends to chat.")
     return room
 
 
@@ -170,7 +183,7 @@ def get_user_info(room, user):
         # convert to list for serializer and select first entry (there will be only 1)
         payload['user_info'] = s.serialize([other_user])[0]
         return json.dumps(payload)
-    except Exception as e:
-        print("EXCEPTION: " + str(e))
+    except ClientError as e:
+        print("ClientError: " + str(e))
 
     return None

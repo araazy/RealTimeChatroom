@@ -242,6 +242,11 @@
       preloadImage(user_info['profile_image'], "id_other_user_profile_image")
     }
 
+    function showClientErrorModal(message) {
+      document.getElementById("id_client_error_modal_body").innerHTML = message
+      document.getElementById("id_trigger_client_error_modal").click()
+    }
+
     function setupWebSocket(room_id) {
 
       console.log("setupWebSocket: " + room_id)
