@@ -203,10 +203,19 @@
   onStart()
 
   function onStart(){
-    {% if m_and_f %}
-      // 默认选择第一个聊天
-      onSelectFriend("{{m_and_f.0.friend.id}}");
+    {% if room %}
+      if ("{{ room.user1 }}" === "{{ request.user }}") {
+          onSelectFriend("{{ room.user2 }}");
+      } else {
+          onSelectFriend("{{ room.user1 }}");
+      }
+    {% else %}
+      {% if m_and_f %}
+        // 默认选择第一个聊天
+        onSelectFriend("{{m_and_f.0.friend.id}}");
+      {% endif %}
     {% endif %}
+
     {% for x in m_and_f %}
       preloadImage("{{x.friend.profile_image.url|safe}}", "id_friend_img_{{x.friend.id}}")
     {% endfor %}
@@ -539,7 +548,7 @@
       $.ajax({
           type: "POST",
           dataType: "json",
-          url:"{% url "chat:create_or_return_private_chat" %}",
+          url:"{% url "chat:create-or-return-private-chat" %}",
           data: payload,
           timeout: 5000,
           success: function(data) {
