@@ -11,8 +11,13 @@ class PrivateChatroom(models.Model):
 
     is_active = models.BooleanField(default=True)
 
+    class Meta:
+        db_table = 'tb_private_chatroom'
+        verbose_name = '私聊'
+        verbose_name_plural = verbose_name
+
     def __str__(self):
-        return f"{self.user1} 与 {self.user2} 建立聊天..."
+        return f"{self.user1} 与 {self.user2} 的聊天..."
 
     @property
     def group_name(self):
@@ -39,6 +44,11 @@ class ChatroomMessage(models.Model):
     content = models.TextField(unique=False, blank=False, )
 
     objects = ChatroomMessageManager()
+
+    class Meta:
+        db_table = 'tb_private_chatroom_message'
+        verbose_name = '私聊消息'
+        verbose_name_plural = verbose_name
 
     def __str__(self):
         return self.content

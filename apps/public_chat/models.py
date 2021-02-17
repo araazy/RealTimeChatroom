@@ -6,6 +6,11 @@ class PublicChatroom(models.Model):
     title = models.CharField(max_length=255, unique=True, blank=False)
     users = models.ManyToManyField(settings.AUTH_USER_MODEL, blank=True, help_text="聊天室中的用户")
 
+    class Meta:
+        db_table = 'tb_public_chatroom'
+        verbose_name = '公共聊天室'
+        verbose_name_plural = verbose_name
+
     def __str__(self):
         return self.title
 
@@ -63,6 +68,11 @@ class PublicChatroomMessage(models.Model):
     content = models.TextField(unique=False, blank=False)
 
     objects = PublicChatroomMessageManager()
+
+    class Meta:
+        db_table = 'tb_public_chatroom_message'
+        verbose_name = '公共聊天室消息'
+        verbose_name_plural = verbose_name
 
     def __str__(self):
         return self.content

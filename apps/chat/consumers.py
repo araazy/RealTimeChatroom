@@ -1,12 +1,16 @@
 import json
 
+
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
+from django.utils import timezone
 
 from account.utils import LazyAccountEncoder
 from chat.exceptions import ClientError
-from chat.models import PrivateChatroom
+from chat.models import PrivateChatroom, ChatroomMessage
+from chat.utils import calculate_timestamp
 from friend.models import FriendList
+from chat.constants import MSG_TYPE_MESSAGE
 
 
 class ChatConsumer(AsyncJsonWebsocketConsumer):
@@ -25,19 +29,19 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
 
     async def receive_json(self, content):
         """
-        Called when we get a text frame. Channels will JSON-decode the payload
-        for us and pass it as the first argument.
+        接收前端发来的消息，并按照command进行处理
         """
-        # Messages will have a "command" key we can switch on
         print("ChatConsumer: receive_json")
         command = content.get("command", None)
         try:
             if command == "join":
                 await self.join_room(content['room_id'])
             elif command == "leave":
-                pass
+                await self.leave_room(content["room_id"])
             elif command == "send":
-                pass
+                if len(content["message"].lstrip()) == 0:
+                    raise ClientError(422, "You can't send an empty message.")
+                await self.send_room(content["room_id"], content["message"])
             elif command == "get_room_chat_messages":
                 pass
             elif command == "get_user_info":
@@ -47,7 +51,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                     payload = json.loads(payload)
                     await self.send_user_info_payload(payload['user_info'])
                 else:
-                    raise ClientError('', "Something went wrong retrieving the other users account details.")
+                    raise ClientError('INVALID_ROOM', "Something went wrong retrieving the other users account details.")
         except ClientError as e:
             await self.handle_client_error(e)
 
@@ -57,7 +61,12 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         """
         # Leave the room
         print("ChatConsumer: disconnect")
-        pass
+        try:
+            if self.room_id is not None:
+                await self.leave_room(self.room_id)
+        except Exception as e:
+            print("EXCEPTION: " + str(e))
+            pass
 
     async def join_room(self, room_id):
         """
@@ -69,7 +78,17 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             room = await get_room_or_error(room_id, self.scope["user"])
         except ClientError as e:
             return await self.handle_client_error(e)
-            # Instruct their client to finish opening the room
+
+        # Store that we're in the room
+        self.room_id = room.id
+
+        # Add them to the group so they get room messages
+        await self.channel_layer.group_add(
+            room.group_name,
+            self.channel_name,
+        )
+
+        # Instruct their client to finish opening the room
         await self.send_json({
             "join": str(room.id),
         })
@@ -80,14 +99,62 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         """
         # The logged-in user is in our scope thanks to the authentication ASGI middleware
         print("ChatConsumer: leave_room")
+        room = await get_room_or_error(room_id, self.scope["user"])
+
+        # Notify the group that someone left
+        await self.channel_layer.group_send(
+            room.group_name,
+            {
+                "type": "chat.leave",  # chat_leave
+                "room_id": room_id,
+                "profile_image": self.scope["user"].profile_image.url,
+                "username": self.scope["user"].username,
+                "user_id": self.scope["user"].id,
+            }
+        )
+
+        # Remove that we're in the room
+        self.room_id = None
+
+        # Remove them from the group so they no longer get room messages
+        await self.channel_layer.group_discard(
+            room.group_name,
+            self.channel_name,
+        )
+        # Instruct their client to finish closing the room
+        await self.send_json({
+            "leave": str(room.id),
+        })
 
     async def send_room(self, room_id, message):
         """
         Called by receive_json when someone sends a message to a room.
         """
         print("ChatConsumer: send_room")
+        # Check they are in this room
+        if self.room_id is not None:
+            if str(room_id) != str(self.room_id):
+                raise ClientError("ROOM_ACCESS_DENIED", "Room access denied")
+        else:
+            raise ClientError("ROOM_ACCESS_DENIED", "Room access denied")
 
-    # These helper methods are named by the types we send - so chat.join becomes chat_join
+        # 获取聊天会话
+        room = await get_room_or_error(room_id, self.scope["user"])
+
+        await create_room_chat_message(room, self.scope["user"], message)
+
+        await self.channel_layer.group_send(
+            room.group_name,
+            {
+                "type": "chat.message",
+                "profile_image": self.scope["user"].profile_image.url,
+                "username": self.scope["user"].username,
+                "user_id": self.scope["user"].id,
+                "message": message,
+            }
+        )
+
+    # 发送消息的辅助函数
     async def chat_join(self, event):
         """
         Called when someone has joined our chat.
@@ -108,6 +175,18 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         """
         # Send a message down to the client
         print("ChatConsumer: chat_message")
+        timestamp = calculate_timestamp(timezone.now())
+
+        await self.send_json(
+            {
+                "msg_type": MSG_TYPE_MESSAGE,
+                "username": event["username"],
+                "user_id": event["user_id"],
+                "profile_image": event["profile_image"],
+                "message": event["message"],
+                "natural_timestamp": timestamp,
+            },
+        )
 
     async def handle_client_error(self, e):
         """
@@ -133,7 +212,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         """
         print("ChatConsumer: send_user_info_payload. ")
         await self.send_json({
-                "user_info": user_info,
+            "user_info": user_info,
         })
 
     async def display_progress_bar(self, is_displayed):
@@ -154,11 +233,11 @@ def get_room_or_error(room_id, user):
     try:
         room = PrivateChatroom.objects.get(pk=room_id)
     except PrivateChatroom.DoesNotExist:
-        raise ClientError("Invalid room.")
+        raise ClientError("INVALID_ROOM", "Invalid room.")
 
     # Is this user allowed in the room? (must be user1 or user2)
     if user != room.user1 and user != room.user2:
-        raise ClientError("You do not have permission to join this room.")
+        raise ClientError("ACCESS_DENIED", "You do not have permission to join this room.")
 
     # Are the users in this room friends?
     friend_list = FriendList.objects.get(user=user).friends.all()
@@ -187,3 +266,8 @@ def get_user_info(room, user):
         print("ClientError: " + str(e))
 
     return None
+
+
+@database_sync_to_async
+def create_room_chat_message(room, user, message):
+    return ChatroomMessage.objects.create(user=user, room=room, content=message)
