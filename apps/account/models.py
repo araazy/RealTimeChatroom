@@ -1,5 +1,9 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+from friend.models import FriendList
 from .utils import get_default_profile_image, get_profile_image_filepath
 
 
@@ -80,5 +84,9 @@ class Account(AbstractBaseUser):
         return True
 
 
-
-
+@receiver(post_save, sender=Account)
+def user_save(sender, instance, **kwargs):
+    """
+    对Account进行save时，确保创建一个FriendList
+    """
+    FriendList.objects.get_or_create(user=instance)

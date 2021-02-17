@@ -1,6 +1,8 @@
 from django.conf import settings
 from django.db import models
 
+from chat.utils import find_or_create_private_chat
+
 
 class FriendList(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="user")
@@ -16,13 +18,21 @@ class FriendList(models.Model):
         if account not in self.friends.all():
             self.friends.add(account)
             self.save()
+            chat = find_or_create_private_chat(self.user, account)
+            if not chat.is_active:
+                chat.is_active = True
+                chat.save()
 
     def remove_friend(self, account):
         """
-        Remove a friend.
+        删除好友
         """
         if account in self.friends.all():
             self.friends.remove(account)
+        chat = find_or_create_private_chat(self.user, account)
+        if chat.is_active:
+            chat.is_active = False
+            chat.save()
 
     def unfriend(self, removee):
         """
