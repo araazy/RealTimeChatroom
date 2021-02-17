@@ -1,15 +1,13 @@
 import json
 from datetime import datetime
 
-from django.core.serializers import serialize
-from django.core.serializers.python import Serializer
-from django.core.paginator import Paginator
-from django.contrib.auth import get_user_model
-from django.contrib.humanize.templatetags.humanize import naturalday, naturaltime
-from django.utils import timezone
-
-from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from channels.db import database_sync_to_async
+from channels.generic.websocket import AsyncJsonWebsocketConsumer
+from django.contrib.auth import get_user_model
+from django.contrib.humanize.templatetags.humanize import naturalday
+from django.core.paginator import Paginator
+from django.core.serializers.python import Serializer
+from django.utils import timezone
 
 from public_chat.models import PublicChatroom, PublicChatroomMessage
 from .constants import MSG_TYPE_CONNECTED_USER_COUNT, MSG_TYPE_MESSAGE, DEFAULT_ROOM_CHAT_MESSAGE_PAGE_SIZE

@@ -19,13 +19,15 @@ from apps.account.views import (
 urlpatterns = [
     path('admin/', admin.site.urls),
     # home page
-    path('', home_screen_view, name='home'),
+    path('', home_screen_view, name='home'),  # 主页，公共聊天室
     path('account/', include('apps.account.urls', namespace='account')),
     path('friend/', include('apps.friend.urls', namespace='friend')),
     path('register/', register_view, name="register"),
     path('login/', login_view, name='login'),
     path('logout/', logout_view, name='logout'),
     path('search/', account_search_view, name="search"),
+    path('chat/', include('chat.urls', namespace='chat')),  # 私聊
+
     # Password reset links (ref: https://github.com/django/django/blob/master/django/contrib/auth/views.py)
     path('password_change/done/',
          auth_views.PasswordChangeDoneView.as_view(template_name='password_reset/password_change_done.html'),
