@@ -10,7 +10,7 @@ from chat.exceptions import ClientError
 from chat.models import PrivateChatroom, ChatroomMessage
 from chat.utils import calculate_timestamp
 from friend.models import FriendList
-from chat.constants import MSG_TYPE_MESSAGE
+from chat.constants import MSG_TYPE_MESSAGE, MSG_TYPE_ENTER, MSG_TYPE_LEAVE
 
 
 class ChatConsumer(AsyncJsonWebsocketConsumer):
@@ -93,6 +93,20 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             "join": str(room.id),
         })
 
+        # 组内发送消息，当前用户进入聊天
+        if self.scope["user"].is_authenticated:
+            # Notify the group that someone joined
+            await self.channel_layer.group_send(
+                room.group_name,
+                {
+                    "type": "chat.join",  # chat_join()
+                    "room_id": room_id,
+                    "profile_image": self.scope["user"].profile_image.url,
+                    "username": self.scope["user"].username,
+                    "user_id": self.scope["user"].id,
+                }
+            )
+
     async def leave_room(self, room_id):
         """
         Called by receive_json when someone sent a leave command.
@@ -154,13 +168,24 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             }
         )
 
-    # 发送消息的辅助函数
+    # 几个发送消息的工具函数
     async def chat_join(self, event):
         """
         Called when someone has joined our chat.
         """
         # Send a message down to the client
         print("ChatConsumer: chat_join: " + str(self.scope["user"].id))
+        if event["username"]:
+            await self.send_json(
+                {
+                    "msg_type": MSG_TYPE_ENTER,
+                    "room_id": event["room_id"],
+                    "profile_image": event["profile_image"],
+                    "username": event["username"],
+                    "user_id": event["user_id"],
+                    "message": event["username"] + " 进入聊天",
+                },
+            )
 
     async def chat_leave(self, event):
         """
@@ -168,6 +193,17 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         """
         # Send a message down to the client
         print("ChatConsumer: chat_leave")
+        if event["username"]:
+            await self.send_json(
+                {
+                    "msg_type": MSG_TYPE_LEAVE,
+                    "room": event["room_id"],
+                    "profile_image": event["profile_image"],
+                    "username": event["username"],
+                    "user_id": event["user_id"],
+                    "message": event["username"] + " 离开聊天",
+                },
+            )
 
     async def chat_message(self, event):
         """
