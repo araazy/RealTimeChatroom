@@ -39,4 +39,4 @@ class Notification(models.Model):
         return self.verb
 
     def get_content_object_type(self):
-        return str(self.content_object.get_cname)
+        return str(self.content_object.get_cname)  # 获取类型

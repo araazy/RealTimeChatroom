@@ -6,6 +6,7 @@ from channels.security.websocket import AllowedHostsOriginValidator
 
 from public_chat.consumers import PublicChatConsumer
 from chat.consumers import ChatConsumer
+from notification.consumers import NotificationConsumer
 
 
 application = ProtocolTypeRouter({
@@ -14,6 +15,7 @@ application = ProtocolTypeRouter({
             URLRouter([
                 path('public_chat/<room_id>/', PublicChatConsumer),
                 path('chat/<room_id>/', ChatConsumer),
+                path('', NotificationConsumer),
             ])
         )
     ),
