@@ -30,6 +30,11 @@ class Notification(models.Model):
     object_id = models.PositiveIntegerField()
     content_object = GenericForeignKey()
 
+    class Meta:
+        db_table = 'tb_notification'
+        verbose_name = '提示'
+        verbose_name_plural = verbose_name
+
     def __str__(self):
         return self.verb
 
