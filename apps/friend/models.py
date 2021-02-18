@@ -1,12 +1,18 @@
+from django.contrib.contenttypes.fields import GenericRelation
+from django.contrib.contenttypes.models import ContentType
 from django.conf import settings
 from django.db import models
 
+from notification.models import Notification
 from chat.utils import find_or_create_private_chat
 
 
 class FriendList(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="user")
     friends = models.ManyToManyField(settings.AUTH_USER_MODEL, blank=True, related_name="friends")
+
+    # generic_relation https://simpleisbetterthancomplex.com/tutorial/2016/10/13/how-to-use-generic-relations.html()
+    notifications = GenericRelation(Notification)
 
     def __str__(self):
         return self.user.username
@@ -55,6 +61,13 @@ class FriendList(models.Model):
             return True
         return False
 
+    @property
+    def get_cname(self):
+        """
+        For determining what kind of object is associated with a Notification
+        """
+        return "FriendList"
+
 
 class FriendRequest(models.Model):
     """
@@ -70,6 +83,7 @@ class FriendRequest(models.Model):
     is_active = models.BooleanField(blank=False, null=False, default=True)  # 好友请求是否有效
 
     timestamp = models.DateTimeField(auto_now_add=True)
+    notifications = GenericRelation(Notification)
 
     def __str__(self):
         return self.sender.username
@@ -104,3 +118,10 @@ class FriendRequest(models.Model):
         """
         self.is_active = False
         self.save()
+
+    @property
+    def get_cname(self):
+        """
+        For determining what kind of object is associated with a Notification
+        """
+        return "FriendRequest"

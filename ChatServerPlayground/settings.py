@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     'friend',
     'public_chat',
     'chat',
+    'notification',
 
     # 自带app
     'django.contrib.admin',
@@ -90,7 +91,7 @@ DATABASES = {
         'NAME': DB_NAME,
         'USER': DB_USER,
         'PASSWORD': DB_PASSWORD,
-        'HOST': '81.70.152.144',
+        'HOST': '127.0.0.1',
         'PORT': '5432',
     }
 }
