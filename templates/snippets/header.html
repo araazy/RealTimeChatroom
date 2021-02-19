@@ -8,7 +8,14 @@
 	.chat-dropdown-header{
 		color: var(--light-primary-text-color);
 	}
+	.scrollable-menu {
+		height: auto;
+		max-height: 90vh;
+		width: 500px;
+		overflow-x: hidden;
+	}
 </style>
+
 
 <div class="d-flex p-3 px-md-4 mb-4 bg-white border-bottom shadow-sm">
   <!-- MEDIUM+ SCREENS -->
@@ -106,21 +113,68 @@
   <!-- END SMALL SCREENS -->
 </div>
 
+
+{% include 'snippets/general_notifications.html' %}
+
+<!-- Setup SOCKET for NOTIFICATIONS -->
 <script type="text/javascript">
-    setupChatDropdownHeader()
+	// Correctly decide between ws:// and wss://
+	var ws_scheme = window.location.protocol == "https:" ? "wss" : "ws";
+	// var ws_path = ws_scheme + '://' + window.location.host + ":8001/"; // PRODUCTION
+	var ws_path = ws_scheme + '://' + window.location.host + "/";
+	// console.log("Connecting to " + ws_path);
+	var notificationSocket = new WebSocket(ws_path);
 
+	// Handle incoming messages
+	notificationSocket.onmessage = function(message) {
+		console.log("Got notification websocket message.");
+		var data = JSON.parse(message.data);
 
-  function executeQuery() {
-      // 判断使用大窗口还是小窗口
-      var query = document.getElementById("id_q_small").value;
-      if (query === "") {
-        query = document.getElementById("id_q_large").value;
-      }
-      window.location.replace("{% url 'search' %}?q=" + query);
-      {#console.log("{% url 'search' %}?q=" + query);#}
-      return false;
-  }
-  /*
+		/*
+			GENERAL NOTIFICATIONS
+		*/
+		// new 'general' notifications data payload
+		if(data.general_msg_type == 0){
+			handleGeneralNotificationsData(data['notifications'], data['new_page_number'])
+		}
+	}
+
+	notificationSocket.onclose = function(e) {
+		console.error('Notification Socket closed unexpectedly');
+	};
+
+	notificationSocket.onopen = function(e){
+		console.log("Notification Socket on open: " + e)
+		setupGeneralNotificationsMenu()
+		getFirstGeneralNotificationsPage()
+	}
+
+	notificationSocket.onerror = function(e){
+		console.log('Notification Socket error', e)
+	}
+
+	if (notificationSocket.readyState == WebSocket.OPEN) {
+		console.log("Notification Socket OPEN complete.")
+	}
+	else if (notificationSocket.readyState == WebSocket.CONNECTING){
+		console.log("Notification Socket connecting..")
+	}
+</script>
+
+<script type="text/javascript">
+	setupChatDropdownHeader()
+
+	function executeQuery() {
+		var query = ""
+		query = document.getElementById('id_q_small').value;
+		if (query == ""){
+			query = document.getElementById('id_q_large').value;
+		}
+	    window.location.replace("{% url 'search' %}?q=" + query)
+	    return false
+	}
+
+	/*
 		Add a header to the dropdown so users can visit /chat/
 	*/
 	function setupChatDropdownHeader(){
@@ -152,39 +206,4 @@
 		window.location.href = url
 	}
 
-</script>
-
-<!-- Setup SOCKET for NOTIFICATIONS -->
-<script type="text/javascript">
-	// Correctly decide between ws:// and wss://
-	var ws_scheme = window.location.protocol === "https:" ? "wss" : "ws";
-	// var ws_path = ws_scheme + '://' + window.location.host + ":8001/"; // PRODUCTION
-	var ws_path = ws_scheme + '://' + window.location.host + "/";
-	// console.log("Connecting to " + ws_path);
-	var notificationSocket = new WebSocket(ws_path);
-
-	// Handle incoming messages
-	notificationSocket.onmessage = function(message) {
-		console.log("Got notification websocket message.");
-		var data = JSON.parse(message.data);
-
-	}
-
-	notificationSocket.onclose = function(e) {
-		console.error('Notification Socket closed unexpectedly');
-	};
-
-	notificationSocket.onopen = function(e){
-		console.log("Notification Socket on open: " + e);
-	}
-
-	notificationSocket.onerror = function(e){
-		console.log('Notification Socket error', e);
-	}
-
-	if (notificationSocket.readyState === WebSocket.OPEN) {
-		console.log("Notification Socket OPEN complete.");
-	} else if (notificationSocket.readyState === WebSocket.CONNECTING){
-		console.log("Notification Socket connecting..");
-	}
 </script>
