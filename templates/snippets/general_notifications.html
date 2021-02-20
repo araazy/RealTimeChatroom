@@ -25,6 +25,7 @@
 
 
 <script src="{% static 'collections/collections.min.js' %}"></script>
+<p class="d-none" id="id_general_page_number">1</p>
 
 <script type="text/javascript">
 
@@ -254,6 +255,61 @@
 		return timestamp
 	}
 
+	/*
+		Update a div with new notification data.
+		Called when the session user accepts/declines a friend request.
+	*/
+	function updateGeneralNotificationDiv(notification){
+		notificationContainer = document.getElementById("id_general_notifications_container")
+
+		if(notificationContainer != null){
+			divs = notificationContainer.childNodes
+      // todo es6
+			divs.forEach(element => {
+				if (element.id === ("id_notification_" + notification['notification_id'])){
+
+					// Replace current div with updated one
+					updatedDiv = createFriendRequestElement(notification)
+					element.replaceWith(updatedDiv)
+				}
+			})
+		}
+	}
+
+	/*
+		Sets the scroll listener for when user scrolls to bottom of notification menu.
+		It will retrieve the next page of results.
+	*/
+	function setOnGeneralNotificationScrollListener(){
+		var menu = document.getElementById("id_general_notifications_container")
+		if(menu != null ){
+			menu.addEventListener("scroll", function(e){
+
+				if ((menu.scrollTop) >= (menu.scrollHeight - menu.offsetHeight)) {
+					getNextGeneralNotificationsPage()
+				}
+			});
+		}
+
+	}
+
+	setOnGeneralNotificationScrollListener()
+
+	/*
+		Called when pagination is exhausted and there is no more notifications.
+	*/
+	function setGeneralPaginationExhausted(){
+		console.log("general pagination exhausted.")
+		setGeneralPageNumber("-1")
+	}
+
+	/*
+		Sets the pagination page number.
+	*/
+	function setGeneralPageNumber(pageNumber){
+		document.getElementById("id_general_page_number").innerHTML = pageNumber
+	}
+
 </script>
 
 <!-- Send to consumer -->
@@ -267,6 +323,36 @@
 			notificationSocket.send(JSON.stringify({
 				"command": "get_general_notifications",
 				"page_number": "1",
+			}));
+		}
+	}
+	/*
+		Accept or Decline a Friend request
+	*/
+	function sendAcceptFriendRequestToSocket(notification_id){
+		notificationSocket.send(JSON.stringify({
+			"command": "accept_friend_request",
+			"notification_id": notification_id,
+		}));
+	}
+	function sendDeclineFriendRequestToSocket(notification_id){
+		notificationSocket.send(JSON.stringify({
+			"command": "decline_friend_request",
+			"notification_id": notification_id,
+		}));
+	}
+
+	/*
+		Retrieve the next page of notifications
+		Called when the user scrolls to the bottom of the popup menu.
+	*/
+	function getNextGeneralNotificationsPage(){
+		var pageNumber = document.getElementById("id_general_page_number").innerHTML
+		// -1 means exhausted or a query is currently in progress
+		if("{{request.user.is_authenticated}}" && pageNumber !== "-1"){
+			notificationSocket.send(JSON.stringify({
+				"command": "get_general_notifications",
+				"page_number": pageNumber,
 			}));
 		}
 	}
