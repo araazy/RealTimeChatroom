@@ -95,23 +95,6 @@ class PublicChatConsumer(AsyncJsonWebsocketConsumer):
             }
         )
 
-    async def chat_message(self, event):
-        """
-        Called when someone has messaged our chat.
-        将
-        """
-        # Send a message down to the client
-        print("PublicChatConsumer: chat_message from user #" + str(event["user_id"]))
-        timestamp = calculate_timestamp(timezone.now())
-        await self.send_json({
-            "msg_type": MSG_TYPE_MESSAGE,
-            "profile_image": event["profile_image"],
-            "username": event["username"],
-            "user_id": event["user_id"],
-            "message": event["message"],
-            "natural_timestamp": timestamp,
-        })
-
     async def join_room(self, room_id):
         """
         Called by receive_json when someone sent a join command.
@@ -207,6 +190,23 @@ class PublicChatConsumer(AsyncJsonWebsocketConsumer):
         print("DISPLAY PROGRESS BAR: " + str(is_displayed))
         await self.send_json({
             "display_progress_bar": is_displayed
+        })
+
+    async def chat_message(self, event):
+        """
+        Called when someone has messaged our chat.
+        将
+        """
+        # Send a message down to the client
+        print("PublicChatConsumer: chat_message from user #" + str(event["user_id"]))
+        timestamp = calculate_timestamp(timezone.now())
+        await self.send_json({
+            "msg_type": MSG_TYPE_MESSAGE,
+            "profile_image": event["profile_image"],
+            "username": event["username"],
+            "user_id": event["user_id"],
+            "message": event["message"],
+            "natural_timestamp": timestamp,
         })
 
     async def connected_user_count(self, event):
