@@ -59,7 +59,7 @@
 					<h4 class="card-title">{{friend.0.username|truncatechars:50}}</h4>
 				</a>
 				{% if friend.1 %}
-				<a href="#" onclick="createOrReturnPrivateChat('{{friend.0.id}}')">Send a Message</a>
+				<a href="#" onclick="createOrReturnPrivateChat('{{friend.0.id}}')">发送消息</a>
 				{% endif %}
 				
 			</div>
@@ -68,7 +68,7 @@
 				{% if friend.1 %}
 					<div class="d-flex flex-row friends-text-container p-3">
 						<p class="friends-text m-auto">
-							Friends 
+							好友
 						</p>
 						<span class="material-icons checkmark-icon m-auto pl-2">
 						check_circle_outline
@@ -78,7 +78,7 @@
 					{% if friend.0 !=  request.user %}
 						<div class="d-flex flex-row friends-text-container p-3">
 							<p class="friends-text m-auto">
-								Not Friends 
+								暂时没有好友
 							</p>
 							<span class="material-icons cancel-icon m-auto pl-2">cancel</span>
 						</div>
@@ -87,7 +87,7 @@
 				{% if friend.0 == request.user %}
 					<div class="d-flex flex-row friends-text-container p-3">
 						<p class="friends-text m-auto">
-							This is you 
+							这是你
 						</p>
 						<span class="material-icons m-auto pl-2">
 						person_pin
@@ -102,9 +102,9 @@
 		
 		{% endfor %}
 		
-		{% else %} <!-- If no friends -->
+		{% else %} <!-- 没有好友 -->
 		<div class="d-flex flex-row flex-grow-1 justify-content-center align-items-center p-4">
-			<p>No friends :(</p>
+			<p>暂时没有好友 :(</p>
 		</div>
 		{% endif %}
 		</div>

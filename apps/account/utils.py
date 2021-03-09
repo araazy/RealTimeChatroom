@@ -23,8 +23,8 @@ def get_default_profile_image():
 # 如果存在原来的url，跳转至原来的url，否则跳到home页面
 def get_redirect_if_exists(request):
     redirect = None
-    if request.GET:
-        if request.GET.get("next"):
+    if request.POST:
+        if request.POST.get("next"):
             redirect = str(request.GET.get("next"))
             print(redirect)
         else:

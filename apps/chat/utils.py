@@ -26,12 +26,12 @@ def calculate_timestamp(timestamp):
     """
 
     """
-    # today or yesterday
+    # 今天或昨天
     if (naturalday(timestamp) == "today") or (naturalday(timestamp) == "yesterday"):
         str_time = datetime.strftime(timestamp, "%I:%M %p")
         str_time = str_time.strip("0")
         ts = f"{naturalday(timestamp)} at {str_time}"
-    # other days
+    # 其他日期
     else:
         str_time = datetime.strftime(timestamp, "%m/%d/%Y")
         ts = f"{str_time}"

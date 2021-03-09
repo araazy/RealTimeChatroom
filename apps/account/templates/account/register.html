@@ -37,16 +37,14 @@
 		<div class="card card-signin">注冊
 		  <div class="card-body">
 		    <form class="form-signin" method="post">{% csrf_token %}
-				<div class="d-flex flex-column pb-3">
-				<img class="img-fluid mx-auto d-block" src="{% static 'profiles/logo_250_250_transparent.png' %}" alt="codingwithmitch logo" width="72" height="72">
-				</div>
-				<input type="email" name="email" id="inputEmail" class="form-control" placeholder="Email address" required autofocus>
 
-				<input type="text" name="username" id="inputUsername" class="form-control" placeholder="Username" required>
+				<input type="email" name="email" id="inputEmail" class="form-control" placeholder="邮箱地址" required autofocus>
 
-				<input type="password" name="password1" id="inputPassword1" class="form-control" placeholder="Password" required>
+				<input type="text" name="username" id="inputUsername" class="form-control" placeholder="用户名" required>
 
-				<input type="password" name="password2" id="inputPassword2" class="form-control" placeholder="Confirm password" required>
+				<input type="password" name="password1" id="inputPassword1" class="form-control" placeholder="密码" required>
+
+				<input type="password" name="password2" id="inputPassword2" class="form-control" placeholder="确认密码" required>
         <!-- registration_form是利用Account模型创建的ModelForm，用来简化form创建流程-->
 				{% for field in registration_form %}
           {% for error in field.errors %}
@@ -60,7 +58,7 @@
 				</div>
 				{% endif %}
 
-				<button class="btn btn-lg btn-primary btn-block" type="submit">Register</button>
+				<button class="btn btn-lg btn-primary btn-block" type="submit">登录</button>
 
 				</form>
 		  </div>

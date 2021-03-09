@@ -19,7 +19,7 @@
     border-bottom-left-radius: 0;
   }
   .form-signin input[type="password"] {
-    margin-bottom: -1px;
+    margin-bottom: 10px;
     border-top-left-radius: 0;
     border-top-right-radius: 0;
   }
@@ -33,11 +33,10 @@
 		  <div class="card-body">
 		    <form class="form-signin" method="post">{% csrf_token %}
 				<div class="d-flex flex-column pb-3">
-				<img class="img-fluid mx-auto d-block" src="{% static 'profiles/logo_250_250_transparent.png' %}" alt="codingwithmitch logo" width="72" height="72">
 				</div>
-				<input type="email" name="email" id="inputEmail" class="form-control" placeholder="Email address" required autofocus>
+				<input type="email" name="email" id="inputEmail" class="form-control" placeholder="邮箱地址" required autofocus>
 
-				<input type="password" name="password" id="inputPassword" class="form-control" placeholder="Password" required>
+				<input type="password" name="password" id="inputPassword" class="form-control" placeholder="密码" required>
 
 				{% for field in login_form %}
           {% for error in field.errors %}
@@ -51,11 +50,11 @@
           </div>
 				{% endif %}
 
-				<button class="btn btn-lg btn-primary btn-block" type="submit">Log in</button>
+				<button class="btn btn-lg btn-primary btn-block" type="submit">登录</button>
 				</form>
 
 				<div class="d-flex flex-column my-4">
-					<a class="m-auto" href="{% url 'password_reset' %}">Reset password</a>
+					<a class="m-auto" href="{% url 'password_reset' %}">重置密码</a>
 				</div>
 		  </div>
 		</div>

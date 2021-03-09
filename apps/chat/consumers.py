@@ -18,14 +18,12 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
 
     async def connect(self):
         """
-        Called when the websocket is handshaking as part of initial connection.
+        WebSocket连接时调用
         """
         print("ChatConsumer: connect: " + str(self.scope["user"]))
 
-        # let everyone connect. But limit read/write to authenticated users
         await self.accept()
 
-        # the room_id will define what it means to be "connected". If it is not None, then the user is connected.
         self.room_id = None
 
     async def receive_json(self, content):
@@ -41,7 +39,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                 await self.leave_room(content["room_id"])
             elif command == "send":
                 if len(content["message"].lstrip()) == 0:
-                    raise ClientError(422, "You can't send an empty message.")
+                    raise ClientError(422, "无法发送空白消息.")
                 await self.send_room(content["room_id"], content["message"])
             elif command == "get_room_chat_messages":
                 await self.display_progress_bar(True)
@@ -61,7 +59,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                     payload = json.loads(payload)
                     await self.send_user_info_payload(payload['user_info'])
                 else:
-                    raise ClientError('INVALID_ROOM', "Something went wrong retrieving the other users account details.")
+                    raise ClientError('INVALID_ROOM', "获取资料错误.")
                 await self.display_progress_bar(False)
         except ClientError as e:
             await self.display_progress_bar(False)
@@ -69,9 +67,8 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
 
     async def disconnect(self, code):
         """
-        Called when the WebSocket closes for any reason.
+        关闭WebSocket连接
         """
-        # Leave the room
         print("ChatConsumer: disconnect")
         try:
             if self.room_id is not None:
@@ -80,21 +77,21 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             print("EXCEPTION: " + str(e))
             pass
 
+    # 几个处理命令的辅助函数
     async def join_room(self, room_id):
         """
-        Called by receive_json when someone sent a join command.
+        join 命令.
         """
-        # The logged-in user is in our scope thanks to the authentication ASGI middleware (AuthMiddlewareStack)
         print("ChatConsumer: join_room: " + str(room_id))
         try:
             room = await get_room_or_error(room_id, self.scope["user"])
         except ClientError as e:
             return await self.handle_client_error(e)
 
-        # Store that we're in the room
+        # 存储当前room_id
         self.room_id = room.id
 
-        # Add them to the group so they get room messages
+        # 将用户加入组中
         await self.channel_layer.group_add(
             room.group_name,
             self.channel_name,

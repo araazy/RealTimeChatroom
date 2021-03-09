@@ -7,7 +7,7 @@ from account.models import Account
 
 class RegistrationForm(UserCreationForm):
     """ 辅助创建注册表单 """
-    email = forms.EmailField(max_length=255, help_text="Required. Add a valid email address.")
+    email = forms.EmailField(max_length=255, help_text="必需")
 
     class Meta:
         model = Account
@@ -19,7 +19,7 @@ class RegistrationForm(UserCreationForm):
             account = Account.objects.get(email=email)
         except Account.DoesNotExist:
             return email
-        raise forms.ValidationError(f"Email {email} is already in use.")
+        raise forms.ValidationError(f"邮箱 {email} 已经被注册.")
 
     def clean_username(self):
         username = self.cleaned_data['username']
@@ -27,7 +27,7 @@ class RegistrationForm(UserCreationForm):
             account = Account.objects.get(username=username)
         except Account.DoesNotExist:
             return username
-        raise forms.ValidationError(f"Username {username} is already in use.")
+        raise forms.ValidationError(f"用户名 {username} 已经被使用.")
 
 
 class AccountAuthenticationForm(forms.ModelForm):
@@ -58,7 +58,7 @@ class AccountUpdateForm(forms.ModelForm):
             account = Account.objects.exclude(pk=self.instance.pk).get(email=email)
         except Account.DoesNotExist:
             return email
-        raise forms.ValidationError(f"Email {email} is already in use.")
+        raise forms.ValidationError(f"邮箱 {email} 已经被注册.")
 
     def clean_username(self):
         username = self.cleaned_data['username']
@@ -66,7 +66,7 @@ class AccountUpdateForm(forms.ModelForm):
             account = Account.objects.exclude(pk=self.instance.pk).get(username=username)
         except Account.DoesNotExist:
             return username
-        raise forms.ValidationError(f"Username {username} is already in use.")
+        raise forms.ValidationError(f"用户名 {username} 已经被使用.")
 
     def save(self, commit=True):
         account = super(AccountUpdateForm, self).save(commit=False)

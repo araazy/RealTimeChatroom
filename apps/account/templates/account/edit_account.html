@@ -54,14 +54,14 @@
           <!-- 使用ajax接管表单的提交，所以不需要enctype="multipart/form-data" -->
 		  		<form class="form-signin" method="post">{% csrf_token %}
 		  			<input class="d-none" type="file" name="profile_image" id="id_profile_image" onchange="readURL(this)">
-			  		  <h6 class="mt-4 field-heading">Email</h6>
+			  		  <h6 class="mt-4 field-heading">邮箱</h6>
 			  		<input type="email" name="email" id="id_input_email" class="form-control" placeholder="Email address" required autofocus value={{form.initial.email}}>
-			  		  <h6 class="mt-4 field-heading">Username</h6>
+			  		  <h6 class="mt-4 field-heading">用户名</h6>
 			  		<input type="text" name="username" id="id_input_username" class="form-control" placeholder="Username" required value="{{form.initial.username}}">
 					<div class="mt-4 checkbox">
 						<label>
 							<input type="checkbox" name="hide_email" id="id_input_hide_email" {% if form.initial.hide_email %}checked{%endif%}>
-							Hide Email
+							隐藏邮箱
 						</label>
 			  			
 					</div>
@@ -79,7 +79,7 @@
 					{% endif %}
 
 					<div class="d-flex flex-column mt-4">
-						<button class="mt-4 btn btn-primary flex-grow-1" type="submit">Save</button>
+						<button class="mt-4 btn btn-primary flex-grow-1" type="submit">保存</button>
 					</div>
 					
 				</form>
@@ -206,7 +206,6 @@
 		})
 	}
 
-	/* return null if invalid or base64String if valid */
 	function isImageSizeValid(image){
 		console.log("max size: {{DATA_UPLOAD_MAX_MEMORY_SIZE}}")
 		// console.log(image)
@@ -257,14 +256,12 @@
 			});
 		}
 		else{
-			alert("Upload an image smaller than 10 MB");
+			alert("无法上传超过10MB大小的图片");
 			document.getElementById("id_cancel").click()
 		}
 	}
 
-	/*
-		Called when a new image is selected from file chooser dialog
-	*/
+
 	function readURL(input) {
     if (input.files && input.files[0]) {
         var reader = new FileReader();

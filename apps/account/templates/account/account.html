@@ -76,7 +76,7 @@
 		  			<img class="d-block border border-dark rounded-circle img-fluid mx-auto profile-image" alt="codingwithmitch logo" id="id_profile_image"
                  src="{% static 'profiles/dummy_image.png' %}">
 		  		</div>
-		  		<p class="mt-4 mb-1 field-heading">Email</p>
+		  		<p class="mt-4 mb-1 field-heading">邮箱</p>
 		  		{%  if is_self %}
 		  			<h5>{{email}}</h5>
 		  		{% else %}
@@ -86,14 +86,14 @@
 			  			<h5>{{email}}</h5>
 			  		{% endif %}
 			  	{% endif %}
-		  		<p class="mt-4 mb-1 field-heading">Username</p>
+		  		<p class="mt-4 mb-1 field-heading">用户名</p>
 		  		<h5>{{username}}</h5>
 
 		  		<!-- If Auth user is viewing their own profile -->
 		  		{% if is_self %}
-		  		<a  class="mt-4 btn btn-primary" href="{% url 'account:edit' user_id=id %}">Update</a>
+		  		<a  class="mt-4 btn btn-primary" href="{% url 'account:edit' user_id=id %}">更新</a>
 				<div class="d-flex flex-column mt-4">
-					<a class="m-auto" href="{% url 'password_change' %}">Change password</a>
+					<a class="m-auto" href="{% url 'password_change' %}">修改密码</a>
 				</div>
 		  		{% endif %}
 		  	</div>
@@ -103,13 +103,13 @@
 		{% if request.user.is_authenticated %}
 		<div class="d-flex flex-column mb-4">
 
-			<!-- THEM to YOU -->
+			<!-- 处理他人好友请求 -->
 			{% if request_sent == 0 %}
 			<div class="card m-2 p-4">
 				<div class="d-flex flex-row align-items-center">
-					<span class="friend-text align-items-center mr-2">Accept Friend Request</span>
-					<span id="id_cancel_{{id}}" class="decline-friend-request material-icons p-1" onclick='triggerDeclineFriendRequest("{{pending_friend_request_id}}")'>cancel</span>
-  					<span id="id_confirm_{{id}}" class="confirm-friend-request material-icons p-1" onclick='triggerAcceptFriendRequest("{{pending_friend_request_id}}")'>check</span>
+					<span class="friend-text align-items-center mr-2">确认好友请求</span>
+					<span id="id_cancel_{{id}}" class="decline-friend-request material-icons p-1" onclick='triggerDeclineFriendRequest("{{pending_friend_request_id}}")'>取消</span>
+  					<span id="id_confirm_{{id}}" class="confirm-friend-request material-icons p-1" onclick='triggerAcceptFriendRequest("{{pending_friend_request_id}}")'>确认</span>
 				</div>
 			</div>
 			{% endif %}
@@ -117,19 +117,19 @@
 			<div class="card m-2 px-4 pb-4">
 				<!-- Cancel Friend Request / Send Friend Request / Remove Friend -->
 				{% if is_friend == False and is_self == False %}
-						<!-- You sent them a request -->
+						<!-- 你对他发送了请求 -->
 						{% if request_sent == 1 %}
 						<div class="d-flex flex-column align-items-center pt-4">
 							<button class="btn btn-danger" id="id_cancel_friend_request_btn">
-								Cancel Friend Request
+								取消请求
 							</button>
 						</div>
 						{% endif %}
-						<!-- No requests have been sent -->
+
 						{% if request_sent == -1 %}
 						<div class="d-flex flex-column align-items-center pt-4">
 							<button class="btn btn-primary" id="id_send_friend_request_btn">
-								Send Friend Request
+								发送好友请求
 							</button>
 						</div>
 						{% endif %}
@@ -151,7 +151,7 @@
 		  		<div class="d-flex flex-column pt-4">
 					<a href="{% url "friend:list" user_id=id %}">
 						<div class="d-flex flex-row align-items-center justify-content-center icon-container">
-							<span class="material-icons mr-2 friends-icon">contact_page</span><span class="friend-text">Friends ({{friends|length}})</span>
+							<span class="material-icons mr-2 friends-icon">contact_page</span><span class="friend-text">好友 ({{friends|length}})</span>
 						</div>
 					</a>
 				</div>
@@ -160,11 +160,11 @@
 
 			{% if friend_requests %}
 			<div class="card m-2 px-4 pb-4">
-				<!-- Friend requests -->
+				<!-- 好友请求 -->
 		  		<div class="d-flex flex-column pt-4">
 					<a href="{% url 'friend:friend-requests' user_id=id %}">
 						<div class="d-flex flex-row align-items-center justify-content-center icon-container">
-							<span class="material-icons mr-2 person-add-icon">person_add</span><span class="friend-text">Friend Requests ({{friend_requests|length}})</span>
+							<span class="material-icons mr-2 person-add-icon">person_add</span><span class="friend-text">好友请求 ({{friend_requests|length}})</span>
 						</div>
 					</a>
 				</div>

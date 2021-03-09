@@ -59,7 +59,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'ChatServerPlayground.urls'
+ROOT_URLCONF = 'Chat.urls'
 
 TEMPLATES = [
     {
@@ -78,8 +78,8 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'ChatServerPlayground.wsgi.application'
-ASGI_APPLICATION = 'ChatServerPlayground.routing.application'
+WSGI_APPLICATION = 'Chat.wsgi.application'
+ASGI_APPLICATION = 'Chat.routing.application'
 
 # Database 使用Postgres
 DB_NAME = 'chat_server_playground'

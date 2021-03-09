@@ -15,7 +15,7 @@ def private_chat_room_view(request, *args, **kwargs):
     user = request.user
     room_id = request.GET.get("room_id")
 
-    # Redirect them if not authenticated
+    # 没有登陆，重定向
     if not user.is_authenticated:
         return redirect("login")
 
@@ -27,7 +27,7 @@ def private_chat_room_view(request, *args, **kwargs):
         except PrivateChatroom.DoesNotExist:
             pass
 
-    # 1. Find all the rooms this user is a part of
+    # 1. 找到与该用户有关的所有聊天室
     rooms1 = PrivateChatroom.objects.filter(user1=user, is_active=True)
     rooms2 = PrivateChatroom.objects.filter(user2=user, is_active=True)
 
@@ -51,13 +51,13 @@ def private_chat_room_view(request, *args, **kwargs):
     """
     m_and_f = []
     for room in rooms:
-        # Figure out which user is the "other user" (aka friend)
+        # 找到对方
         if room.user1 == user:
             friend = room.user2
         else:
             friend = room.user1
         m_and_f.append({
-            'message': "",  # blank msg for now (since we have no messages)
+            'message': "",
             'friend': friend
         })
     context['m_and_f'] = m_and_f
@@ -67,7 +67,7 @@ def private_chat_room_view(request, *args, **kwargs):
     return render(request, "chat/room.html", context)
 
 
-# Ajax call to return a private chatroom or create one if does not exist
+# Ajax请求，返回或创建一个聊天对话
 def create_or_return_private_chat(request, *args, **kwargs):
     user1 = request.user
     payload = {}
